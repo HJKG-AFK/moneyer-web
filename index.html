@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moneyer App - Prototype</title>
+    
+    <!-- PWA and Mobile App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1F2937">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/3B82F6/FFFFFF?text=M">
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #F7F7F7;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F1F6;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: rgba(229, 231, 235, 0.8);
+            --shadow-color: rgba(30, 41, 59, 0.05);
+        }
+        .dark {
+            --bg-primary: #121212;
+            --bg-secondary: #1E1E1E;
+            --bg-tertiary: #2C2C2E;
+            --text-primary: #E5E7EB;
+            --text-secondary: #9CA3AF;
+            --border-color: rgba(55, 65, 81, 0.8);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .app-container {
+            background-color: var(--bg-primary);
+            transition: background-color 0.3s ease;
+        }
+        .card, .header-card {
+            background-color: var(--bg-secondary);
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+            transition: background-color 0.3s ease;
+        }
+        .text-color-primary { color: var(--text-primary); }
+        .text-color-secondary { color: var(--text-secondary); }
+        .modal-bg { background-color: var(--bg-tertiary); }
+        
+        .ios-safe-area-top { padding-top: env(safe-area-inset-top, 1rem); }
+        .ios-safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .tap-effect { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .tap-effect:active { transform: scale(0.96); }
+        
+        .screen { display: none; animation: pop-in 0.3s ease-out; }
+        .screen.active { display: flex; }
+        
+        .add-transaction-modal, .confirm-modal-container { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; opacity: 0; pointer-events: none; }
+        .add-transaction-modal.active, .confirm-modal-container.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        .category-icon { opacity: 0; transform: translateY(20px); animation: slide-up-fade-in 0.5s forwards; }
+        .category-icon .icon-bg { transition: background-color 0.3s ease, color 0.3s ease; }
+        .category-icon.selected .icon-bg { background-color: var(--category-color, #3B82F6); }
+        .category-icon.selected .icon-bg i { color: white !important; }
+        .swipe-wrapper { position: relative; overflow: hidden; border-radius: 0.75rem; }
+        .swipe-content { transition: transform 0.3s ease-out; will-change: transform; }
+        .delete-action { position: absolute; top: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background-color: #EF4444; color: white; width: 80px; transform: translateX(100%); transition: transform 0.3s ease-out; will-change: transform; }
+        .swipe-wrapper.swiped .swipe-content { transform: translateX(-80px); }
+        .swipe-wrapper.swiped .delete-action { transform: translateX(0); }
+        
+        .theme-switch { position: relative; display: inline-block; width: 51px; height: 31px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 23px; width: 23px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #34C759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slide-up-fade-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-800 flex justify-center items-center h-screen">
+
+    <div id="app-container" class="app-container w-full max-w-sm h-[844px] rounded-[44px] shadow-2xl overflow-hidden relative flex flex-col">
+
+        <!-- ===== 屏幕内容区 ===== -->
+        <div id="main-content-area" class="flex-1 overflow-hidden relative">
+            
+            <div id="screen-home" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><div class="flex justify-between items-center"><div><p class="text-color-secondary">欢迎回来,</p><h1 class="text-2xl font-bold text-color-primary">爱吃土豆</h1></div><img src="https://placehold.co/150x150/E2E8F0/4A5568?text=土豆" alt="avatar" class="w-12 h-12 rounded-full"></div></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="animate-pop-in bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 mb-6"><p class="text-sm opacity-80">本月结余</p><p id="home-balance" class="text-4xl font-bold mt-2 bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text">¥0.00</p><div class="mt-4 h-2 bg-white/30 rounded-full"><div id="home-progress" class="h-2 bg-white rounded-full w-2/3"></div></div></div><div class="grid grid-cols-2 gap-4 mb-8"><div class="card p-4 rounded-2xl animate-slide-up" style="animation-delay: 100ms;"><div class="flex items-center text-green-500 mb-1"><i class="fas fa-arrow-up mr-2"></i><p class="font-semibold">收入</p></div><p id="home-income" class="text-2xl font-bold text-color-primary">¥0.00</p></div><div class="card p-4 rounded-2xl animate-slide-up" style="animation-delay: 200ms;"><div class="flex items-center text-red-500 mb-1"><i class="fas fa-arrow-down mr-2"></i><p class="font-semibold">支出</p></div><p id="home-expense" class="text-2xl font-bold text-color-primary">¥0.00</p></div></div><h2 class="text-lg font-bold text-color-primary mb-4">最近交易</h2><div id="home-transaction-list" class="space-y-3"></div></main>
+            </div>
+
+            <div id="screen-list" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">收支明细</h1><div class="header-card mt-4 p-3 rounded-2xl flex justify-around text-center"><div><p class="text-sm text-color-secondary">本月支出</p><p id="list-total-expense" class="font-bold text-lg text-red-500">¥0.00</p></div><div class="border-l mx-2"></div><div><p class="text-sm text-color-secondary">本月收入</p><p id="list-total-income" class="font-bold text-lg text-green-500">¥0.00</p></div></div></header>
+                <main id="list-main-content" class="flex-1 overflow-y-auto px-6 pt-4 pb-24"></main>
+            </div>
+
+            <div id="screen-analytics" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">统计分析</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="flex justify-center mb-6"><div class="card p-1 rounded-full flex space-x-1"><button id="monthly-btn" class="switcher-btn active px-8 py-1.5 text-sm font-semibold rounded-full bg-blue-600 text-white shadow-md">月</button><button id="yearly-btn" class="switcher-btn px-8 py-1.5 text-sm font-semibold rounded-full text-color-secondary">年</button></div></div><div class="flex justify-center items-center mb-8"><div class="relative h-[280px] w-[280px]"><canvas id="expenseChart"></canvas><div id="chart-center-text" class="absolute inset-0 flex flex-col justify-center items-center pointer-events-none"><p class="text-color-secondary text-sm">本月总支出</p><p id="chart-total" class="text-3xl font-bold text-color-primary">¥0.00</p></div></div></div><div id="analytics-category-list" class="space-y-3"></div></main>
+            </div>
+            
+            <div id="screen-settings" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">设置</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-4">
+                    <div class="card rounded-2xl p-2">
+                        <div class="flex justify-between items-center p-3"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center mr-3"><i class="fas fa-palette"></i></div><span class="text-color-primary font-medium">深色模式</span></div><label class="theme-switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label></div>
+                        <div class="border-t mx-3" style="border-color: var(--border-color)"></div>
+                        <div class="flex justify-between items-center p-3 tap-effect" id="category-management-btn"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center mr-3"><i class="fas fa-tags"></i></div><span class="text-color-primary font-medium">分类管理</span></div><i class="fas fa-chevron-right text-color-secondary"></i></div>
+                    </div>
+                    <div class="card rounded-2xl p-2">
+                        <div class="flex justify-between items-center p-3 tap-effect" id="clear-data-btn"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-red-500 text-white flex items-center justify-center mr-3"><i class="fas fa-trash-alt"></i></div><span class="text-red-500 font-medium">清除全部数据</span></div></div>
+                    </div>
+                    <div class="card rounded-2xl p-4 text-center">
+                        <p class="text-sm text-color-primary">由 <span class="font-bold text-blue-500">爱吃土豆</span> 开发</p>
+                        <p class="text-xs text-color-secondary mt-1">联系方式: 2281846183@qq.com</p>
+                    </div>
+                </div></main>
+            </div>
+            
+            <div id="screen-category-management" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0 flex items-center"><button id="back-to-settings-btn" class="tap-effect text-blue-500 text-lg px-2"><i class="fas fa-chevron-left"></i></button><h1 class="flex-1 text-center text-xl font-bold text-color-primary -ml-8">分类管理</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-6">
+                    <div><h2 class="text-lg font-bold text-color-primary mb-2">支出分类</h2><div id="expense-category-manage-list" class="space-y-1"></div></div>
+                    <div><h2 class="text-lg font-bold text-color-primary mb-2">收入分类</h2><div id="income-category-manage-list" class="space-y-1"></div></div>
+                </div></main>
+            </div>
+
+        </div>
+        
+        <footer class="absolute bottom-0 left-0 right-0 h-[88px] ios-safe-area-bottom z-20" style="background-color: var(--bg-tertiary-translucent, rgba(241, 241, 246, 0.7)); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color);"><nav class="flex justify-around items-center h-full px-4"><a href="#" id="nav-home" class="nav-item flex flex-col items-center text-blue-600 font-semibold tap-effect"><i class="fas fa-home text-2xl"></i><span class="text-xs mt-1">首页</span></a><a href="#" id="nav-list" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-list-ul text-2xl"></i><span class="text-xs mt-1">明细</span></a><a href="#" id="nav-add" class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-blue-300 tap-effect"><i class="fas fa-plus text-white text-3xl"></i></a><a href="#" id="nav-analytics" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-chart-pie text-2xl"></i><span class="text-xs mt-1">统计</span></a><a href="#" id="nav-settings" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-cog text-2xl"></i><span class="text-xs mt-1">设置</span></a></nav></footer>
+        
+        <div id="add-transaction-modal" class="add-transaction-modal absolute inset-0 z-30"><div class="absolute inset-0 bg-black/30 backdrop-blur-md"></div><div id="modal-content" class="modal-bg absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 ios-safe-area-bottom flex flex-col h-[90%]"><div class="flex justify-center mb-3"><div class="w-10 h-1.5 bg-gray-300 rounded-full"></div></div><div class="relative self-center bg-gray-200 dark:bg-gray-700 p-1 rounded-full flex space-x-1 mb-4"><div id="type-switcher-bg" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-0.25rem)] card rounded-full shadow-sm transition-transform duration-300 ease-in-out"></div><button id="type-expense" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-primary z-10">支出</button><button id="type-income" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-secondary z-10">收入</button></div><div class="text-center my-4"><span id="amount-display" class="text-5xl font-bold text-color-primary">¥0.00</span></div><div class="mb-4"><p class="text-sm font-semibold text-color-secondary px-2 mb-2">选择分类</p><div id="category-list" class="flex space-x-4 overflow-x-auto pb-3 px-2"></div></div><div class="grid grid-cols-4 gap-2 text-2xl font-medium text-center flex-1"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">1</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">2</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">3</button><input type="text" id="remark-input" placeholder="添加备注..." class="tap-effect card text-color-primary rounded-xl text-sm text-center placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">4</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">5</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">6</button><button class="keypad-btn tap-effect card rounded-xl flex justify-center items-center text-blue-600 font-bold">今天</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">7</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">8</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">9</button><button id="save-btn" rowspan="2" class="keypad-btn tap-effect bg-blue-600 text-white rounded-xl flex justify-center items-center row-span-2 text-lg font-bold">完成</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">.</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">0</button><button id="backspace-btn" class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center"><i class="fas fa-backspace text-color-secondary"></i></button></div></div></div>
+        
+        <div id="confirm-modal-container" class="confirm-modal-container absolute inset-0 z-40"><div class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8"><div class="card rounded-2xl p-6 w-full max-w-sm text-center"><h2 id="confirm-title" class="text-lg font-bold text-color-primary mb-2"></h2><p id="confirm-message" class="text-sm text-color-secondary mb-6"></p><div class="flex space-x-4"><button id="confirm-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 text-color-primary font-bold py-3 rounded-lg tap-effect">取消</button><button id="confirm-ok-btn" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-lg tap-effect">确认</button></div></div></div></div>
+
+        <div id="custom-alert" class="absolute inset-x-0 top-0 flex justify-center items-start pt-16 z-50 pointer-events-none opacity-0 transition-opacity duration-300"><div class="bg-black/70 text-white text-sm font-semibold px-6 py-3 rounded-full shadow-lg"><p id="alert-message"></p></div></div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+
+    const genId = () => Math.random().toString(36).substring(2, 10);
+    let expenseCategories = [
+        { name: '餐饮', icon: 'fas fa-utensils', color: '#F97316', bgColor: 'bg-orange-100', textColor: 'text-orange-500' },
+        { name: '购物', icon: 'fas fa-shopping-cart', color: '#EC4899', bgColor: 'bg-pink-100', textColor: 'text-pink-500' },
+        { name: '交通', icon: 'fas fa-bus', color: '#14B8A6', bgColor: 'bg-teal-100', textColor: 'text-teal-600' },
+        { name: '医药', icon: 'fas fa-pills', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
+        { name: '居住', icon: 'fas fa-home', color: '#0EA5E9', bgColor: 'bg-sky-100', textColor: 'text-sky-500' },
+        { name: '娱乐', icon: 'fas fa-film', color: '#8B5CF6', bgColor: 'bg-violet-100', textColor: 'text-violet-500' },
+    ];
+    let incomeCategories = [
+        { name: '工资', icon: 'fas fa-briefcase', color: '#22C55E', bgColor: 'bg-green-100', textColor: 'text-green-500' },
+        { name: '理财', icon: 'fas fa-chart-line', color: '#3B82F6', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
+        { name: '红包', icon: 'fas fa-gift', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
+        { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
+    ];
+    
+    let transactions = [
+        { id: genId(), type: 'income', category: '工资', amount: 8000.00, remark: '五月工资', date: '2025-05-25' },
+        { id: genId(), type: 'expense', category: '餐饮', amount: 25.50, remark: '午餐', date: new Date().toISOString().split('T')[0] },
+    ];
+
+    const mainContentArea = document.getElementById('main-content-area');
+    const modal = document.getElementById('add-transaction-modal');
+    const customAlert = document.getElementById('custom-alert');
+    const alertMessage = document.getElementById('alert-message');
+    let alertTimeout;
+    let expenseChartInstance;
+    
+    function showAlert(message) {
+        if(alertMessage) alertMessage.textContent = message;
+        if(customAlert) {
+            customAlert.classList.remove('opacity-0');
+            clearTimeout(alertTimeout);
+            alertTimeout = window.setTimeout(() => {
+                customAlert.classList.add('opacity-0');
+            }, 2000);
+        }
+    }
+    
+    function getCategoryInfo(categoryName, type) {
+        const source = type === 'expense' ? expenseCategories : incomeCategories;
+        return source.find(c => c.name === categoryName) || expenseCategories.find(c => c.name === '其他') || { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' };
+    }
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+        document.getElementById(screenId)?.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('text-blue-600', 'font-semibold');
+            item.classList.add('text-color-secondary');
+        });
+        const activeNavItem = document.getElementById(`nav-${screenId.split('-')[1]}`);
+        if(activeNavItem){
+            activeNavItem.classList.add('text-blue-600', 'font-semibold');
+            activeNavItem.classList.remove('text-color-secondary');
+        }
+        if (screenId === 'screen-list') renderTransactionList();
+        if (screenId === 'screen-analytics') renderAnalyticsPage();
+        if (screenId === 'screen-home') renderHomePage();
+        if (screenId === 'screen-category-management') renderCategoryManagementPage();
+    }
+    
+    function renderAll() {
+        renderHomePage();
+        renderTransactionList();
+    }
+    
+    function calculateTotals(period) {
+        const now = new Date();
+        return transactions.reduce((acc, t) => {
+            const tDate = new Date(t.date);
+            let shouldInclude = false;
+            if (period === 'month' && tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
+                shouldInclude = true;
+            } else if (period === 'year' && tDate.getFullYear() === now.getFullYear()) {
+                shouldInclude = true;
+            }
+            if (shouldInclude) {
+                acc[t.type] += t.amount;
+            }
+            return acc;
+        }, { income: 0, expense: 0 });
+    }
+
+    function renderHomePage() {
+        const totals = calculateTotals('month');
+        const balance = totals.income - totals.expense;
+        const homeBalance = document.getElementById('home-balance');
+        if(homeBalance) homeBalance.textContent = `¥${balance.toFixed(2)}`;
+        const homeIncome = document.getElementById('home-income');
+        if(homeIncome) homeIncome.textContent = `¥${totals.income.toFixed(2)}`;
+        const homeExpense = document.getElementById('home-expense');
+        if(homeExpense) homeExpense.textContent = `¥${totals.expense.toFixed(2)}`;
+        const progress = totals.income > 0 ? (totals.expense / totals.income) * 100 : 0;
+        const homeProgress = document.getElementById('home-progress');
+        if(homeProgress) homeProgress.style.width = `${Math.min(progress, 100)}%`;
+        
+        const homeList = document.getElementById('home-transaction-list');
+        if(!homeList) return;
+        homeList.innerHTML = '';
+        transactions.slice(0, 3).forEach((t, index) => {
+            const info = getCategoryInfo(t.category, t.type);
+            const item = document.createElement('div');
+            item.className = 'card p-4 rounded-2xl flex items-center justify-between tap-effect animate-slide-up';
+            item.style.animationDelay = `${300 + index * 100}ms`;
+            const amountClass = t.type === 'income' ? 'text-green-500' : 'font-bold text-color-primary';
+            const sign = t.type === 'income' ? '+' : '-';
+            const date = new Date(t.date).toDateString() === new Date().toDateString() ? '今天' : '昨天';
+            item.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${t.category}</p><p class="text-sm text-color-secondary">${date}</p></div></div><p class="font-semibold text-lg ${amountClass}">${sign}¥${t.amount.toFixed(2)}</p>`;
+            homeList.appendChild(item);
+        });
+    }
+
+    const listMainContent = document.getElementById('list-main-content');
+    function renderTransactionList() {
+        const totals = calculateTotals('month');
+        const listTotalIncome = document.getElementById('list-total-income');
+        if(listTotalIncome) listTotalIncome.textContent = `¥${totals.income.toFixed(2)}`;
+        const listTotalExpense = document.getElementById('list-total-expense');
+        if(listTotalExpense) listTotalExpense.textContent = `¥${totals.expense.toFixed(2)}`;
+
+        if(!listMainContent) return;
+        listMainContent.innerHTML = '';
+        const grouped = transactions.reduce((acc, t) => {
+            const date = new Date(t.date);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            let key;
+            if (date.toDateString() === today.toDateString()) key = '今天';
+            else if (date.toDateString() === yesterday.toDateString()) key = '昨天';
+            else key = date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(t);
+            return acc;
+        }, {});
+
+        Object.keys(grouped).forEach((dateGroup) => {
+            const groupWrapper = document.createElement('div');
+            groupWrapper.className = 'mb-4';
+            const title = document.createElement('h3');
+            title.className = 'text-color-secondary font-bold mb-2';
+            title.textContent = dateGroup;
+            groupWrapper.appendChild(title);
+            const listContainer = document.createElement('div');
+            listContainer.className = 'card p-2 space-y-1';
+            grouped[dateGroup].forEach((t) => {
+                const info = getCategoryInfo(t.category, t.type);
+                const swipeWrapper = document.createElement('div');
+                swipeWrapper.className = 'swipe-wrapper';
+                swipeWrapper.innerHTML = `<div class="delete-action tap-effect"><i class="fas fa-trash-alt"></i></div><div class="swipe-content flex items-center justify-between p-3"><div class="flex items-center pointer-events-none"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${t.category}</p>${t.remark ? `<p class="text-sm text-color-secondary">${t.remark}</p>` : ''}</div></div><p class="font-semibold text-lg ${t.type === 'income' ? 'text-green-500' : 'text-color-primary'} pointer-events-none">${t.type === 'income' ? '+' : '-'}¥${t.amount.toFixed(2)}</p></div>`;
+                addSwipeToDelete(swipeWrapper, t.id);
+                listContainer.appendChild(swipeWrapper);
+            });
+            groupWrapper.appendChild(listContainer);
+            listMainContent.appendChild(groupWrapper);
+        });
+    }
+
+    function addSwipeToDelete(element, transactionId) {
+        let startX, currentX, isSwiping = false;
+        const swipeContent = element.querySelector('.swipe-content');
+        if(!swipeContent) return;
+
+        function handleMove(e) { if (isSwiping) { currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const diffX = currentX - startX; if (diffX < 0 && diffX > -100) swipeContent.style.transform = `translateX(${diffX}px)`; } }
+        function handleEnd() { if (isSwiping) { isSwiping = false; const diffX = currentX - startX; if (diffX < -40) { element.classList.add('swiped'); swipeContent.style.transform = `translateX(-80px)`; } else { element.classList.remove('swiped'); swipeContent.style.transform = 'translateX(0)'; } window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleEnd); window.removeEventListener('touchmove', handleMove); window.removeEventListener('touchend', handleEnd); } }
+        swipeContent.addEventListener('mousedown', (e) => { isSwiping = true; startX = e.clientX; window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); });
+        swipeContent.addEventListener('touchstart', (e) => { isSwiping = true; startX = e.touches[0].clientX; window.addEventListener('touchmove', handleMove); window.addEventListener('touchend', handleEnd); });
+        element.querySelector('.delete-action')?.addEventListener('click', () => { transactions = transactions.filter(t => t.id !== transactionId); showAlert('删除成功!'); renderAll(); });
+    }
+
+    const addBtn = document.getElementById('nav-add');
+    const saveBtn = document.getElementById('save-btn');
+    const amountDisplay = document.getElementById('amount-display');
+    const keypadBtns = document.querySelectorAll('.keypad-btn');
+    const categoryList = document.getElementById('category-list');
+    const remarkInput = document.getElementById('remark-input');
+    let currentAmount = '0';
+    let currentType = 'expense';
+
+    function openModal() { modal?.classList.add('active'); renderCategories(expenseCategories); }
+    function closeModal() { modal?.classList.remove('active'); resetCalculator(); }
+    function saveTransaction() { 
+        if (parseFloat(currentAmount) === 0) { 
+            showAlert('金额不能为0'); 
+            return; 
+        } 
+        const selectedCategoryEl = document.querySelector('.category-icon.selected'); 
+        if (!selectedCategoryEl) return;
+        const categoryName = selectedCategoryEl.querySelector('span')?.textContent || ''; 
+        const newTransaction = { id: genId(), type: currentType, category: categoryName, amount: parseFloat(currentAmount), remark: remarkInput.value, date: new Date().toISOString().split('T')[0] }; 
+        transactions.unshift(newTransaction); 
+        closeModal(); 
+        showAlert('保存成功!'); 
+        renderAll(); 
+        showScreen('screen-list'); 
+    }
+    
+    function renderCategories(categories) { 
+        if(!categoryList) return;
+        categoryList.innerHTML = ''; 
+        categories.forEach((cat, index) => { 
+            const div = document.createElement('div'); 
+            div.className = 'category-icon text-center space-y-1 shrink-0 tap-effect'; 
+            div.style.setProperty('--category-color', cat.color); 
+            div.style.animationDelay = `${index * 50}ms`; 
+            if (index === 0) div.classList.add('selected'); 
+            div.innerHTML = `<div class="icon-bg w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center"><i class="${cat.icon} text-2xl text-color-secondary transition-colors"></i></div><span class="text-xs text-color-secondary">${cat.name}</span>`; 
+            div.addEventListener('click', () => { 
+                document.querySelectorAll('.category-icon').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected');
+            }); 
+            categoryList.appendChild(div); 
+        }); 
+    }
+
+    const typeSwitcherBg = document.getElementById('type-switcher-bg');
+    const typeExpenseBtn = document.getElementById('type-expense');
+    const typeIncomeBtn = document.getElementById('type-income');
+    if (typeExpenseBtn && typeIncomeBtn && typeSwitcherBg) {
+        typeExpenseBtn.addEventListener('click', () => { currentType = 'expense'; typeSwitcherBg.style.transform = 'translateX(0)'; typeExpenseBtn.classList.add('text-color-primary'); typeExpenseBtn.classList.remove('text-color-secondary'); typeIncomeBtn.classList.add('text-color-secondary'); typeIncomeBtn.classList.remove('text-color-primary'); renderCategories(expenseCategories); });
+        typeIncomeBtn.addEventListener('click', () => { currentType = 'income'; typeSwitcherBg.style.transform = 'translateX(calc(100% + 0.25rem))'; typeIncomeBtn.classList.add('text-color-primary'); typeIncomeBtn.classList.remove('text-color-secondary'); typeExpenseBtn.classList.add('text-color-secondary'); typeExpenseBtn.classList.remove('text-color-primary'); renderCategories(incomeCategories); });
+    }
+    function updateDisplay() { if(amountDisplay) amountDisplay.textContent = `¥${currentAmount}`; }
+    function resetCalculator() { currentAmount = '0'; if(remarkInput) remarkInput.value = ''; updateDisplay(); }
+    addBtn?.addEventListener('click', (e) => { e.preventDefault(); openModal(); });
+    saveBtn?.addEventListener('click', (e) => { e.preventDefault(); saveTransaction(); });
+    modal?.addEventListener('click', (e) => { if (e.target.id === 'add-transaction-modal') { closeModal(); } });
+    keypadBtns.forEach(btn => { btn.addEventListener('click', () => { const key = btn.textContent?.trim() || ''; if (!isNaN(parseFloat(key))) { if (currentAmount === '0') currentAmount = key; else if (currentAmount.length < 9) currentAmount += key; } else if (key === '.' && !currentAmount.includes('.')) { currentAmount += '.'; } else if (btn.id === 'backspace-btn') { currentAmount = currentAmount.length > 1 ? currentAmount.slice(0, -1) : '0'; } updateDisplay(); }); });
+
+    function renderAnalyticsPage(period = 'month') {
+        const Chart = window.Chart;
+        if (!Chart) return;
+        const ctx = document.getElementById('expenseChart')?.getContext('2d');
+        if (!ctx) return;
+        const totals = calculateTotals(period);
+        const expenseData = expenseCategories.map(cat => {
+            return transactions.filter(t => {
+                const tDate = new Date(t.date);
+                const now = new Date();
+                const periodCheck = period === 'month' ? (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) : (tDate.getFullYear() === now.getFullYear());
+                return t.type === 'expense' && t.category === cat.name && periodCheck;
+            }).reduce((sum, t) => sum + t.amount, 0);
+        });
+        const totalExpense = totals.expense;
+        const percentages = totalExpense > 0 ? expenseData.map(d => (d / totalExpense) * 100) : expenseData.map(() => 0);
+        const chartData = { labels: expenseCategories.map(c => c.name), datasets: [{ data: percentages, backgroundColor: expenseCategories.map(c => c.color), borderWidth: 0 }] };
+        if (expenseChartInstance) expenseChartInstance.destroy();
+        expenseChartInstance = new Chart(ctx, { type: 'doughnut', data: chartData, options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false }}, animation: { animateRotate: true, duration: 1000, easing: 'easeInOutCubic' }}});
+        const chartTotal = document.getElementById('chart-total');
+        if(chartTotal) chartTotal.textContent = `¥${totalExpense.toFixed(2)}`;
+        const analyticsCategoryList = document.getElementById('analytics-category-list');
+        if(!analyticsCategoryList) return;
+        analyticsCategoryList.innerHTML = '<h2 class="text-lg font-bold text-color-primary mb-2">分类支出排行榜</h2>';
+        expenseCategories.forEach((cat, index) => {
+             if (expenseData[index] > 0) {
+                 const info = getCategoryInfo(cat.name, 'expense');
+                 const item = document.createElement('div');
+                 item.className = 'card p-4 rounded-2xl flex items-center justify-between tap-effect';
+                 item.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${cat.name}</p></div></div><div class="text-right"><p class="font-bold text-lg text-color-primary">-¥${expenseData[index].toFixed(2)}</p><p class="text-sm text-color-secondary">${percentages[index].toFixed(1)}%</p></div>`;
+                 analyticsCategoryList.appendChild(item);
+             }
+        });
+    }
+    
+    document.getElementById('monthly-btn')?.addEventListener('click', (e) => { const target = e.currentTarget; target.classList.add('active', 'bg-blue-600', 'text-white'); target.classList.remove('text-color-secondary'); document.getElementById('yearly-btn')?.classList.remove('active', 'bg-blue-600', 'text-white'); document.getElementById('yearly-btn')?.classList.add('text-color-secondary'); const chartCenterText = document.querySelector('#chart-center-text p'); if(chartCenterText) chartCenterText.textContent = '本月总支出'; renderAnalyticsPage('month'); });
+    document.getElementById('yearly-btn')?.addEventListener('click', (e) => { const target = e.currentTarget; target.classList.add('active', 'bg-blue-600', 'text-white'); target.classList.remove('text-color-secondary'); document.getElementById('monthly-btn')?.classList.remove('active', 'bg-blue-600', 'text-white'); document.getElementById('monthly-btn')?.classList.add('text-color-secondary'); const chartCenterText = document.querySelector('#chart-center-text p'); if(chartCenterText) chartCenterText.textContent = '本年总支出'; renderAnalyticsPage('year'); });
+    
+    const themeToggle = document.getElementById('theme-toggle');
+    const appContainer = document.getElementById('app-container');
+    function applyTheme(isDark) { if(appContainer) { if(isDark) { appContainer.classList.add('dark'); themeToggle.checked = true; } else { appContainer.classList.remove('dark'); themeToggle.checked = false; } } }
+    themeToggle?.addEventListener('change', (e) => { const isDark = e.target.checked; localStorage.setItem('moneyer-theme', isDark ? 'dark' : 'light'); applyTheme(isDark); });
+    
+    document.getElementById('nav-home')?.addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-home'); });
+    document.getElementById('nav-analytics')?.addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-analytics'); });
+    document.getElementById('nav-list')?.addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-list'); });
+    document.getElementById('nav-settings')?.addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-settings'); });
+    document.getElementById('category-management-btn')?.addEventListener('click', () => showScreen('screen-category-management'));
+    document.getElementById('back-to-settings-btn')?.addEventListener('click', () => showScreen('screen-settings'));
+    
+    const confirmModal = document.getElementById('confirm-modal-container');
+    document.getElementById('clear-data-btn')?.addEventListener('click', () => {
+        const confirmTitle = document.getElementById('confirm-title');
+        const confirmMessage = document.getElementById('confirm-message');
+        if(confirmTitle) confirmTitle.textContent = '确认清除';
+        if(confirmMessage) confirmMessage.textContent = '此操作将永久删除所有交易记录，无法恢复。您确定要继续吗？';
+        confirmModal?.classList.add('active');
+    });
+    document.getElementById('confirm-cancel-btn')?.addEventListener('click', () => confirmModal?.classList.remove('active'));
+    document.getElementById('confirm-ok-btn')?.addEventListener('click', () => {
+        transactions = [];
+        renderAll();
+        showAlert('所有数据已清除');
+        confirmModal?.classList.remove('active');
+    });
+
+    function renderCategoryManagementPage() {
+        const expenseList = document.getElementById('expense-category-manage-list');
+        const incomeList = document.getElementById('income-category-manage-list');
+        if (!expenseList || !incomeList) return;
+        expenseList.innerHTML = '';
+        incomeList.innerHTML = '';
+        
+        [expenseCategories, incomeCategories].forEach((list, index) => {
+            const targetEl = index === 0 ? expenseList : incomeList;
+            list.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'card flex items-center justify-between p-3 rounded-lg';
+                item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${cat.bgColor} flex items-center justify-center mr-3"><i class="${cat.icon} ${cat.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><div class="flex items-center space-x-4"><i class="fas fa-trash-alt text-red-500 cursor-pointer tap-effect"></i><i class="fas fa-bars text-color-secondary cursor-grab"></i></div>`;
+                targetEl.appendChild(item);
+            });
+        });
+    }
+
+    const savedTheme = localStorage.getItem('moneyer-theme');
+    applyTheme(savedTheme === 'dark');
+    
+    showScreen('screen-home');
+    renderAll();
+});
+</script>
+
+</body>
+</html>
