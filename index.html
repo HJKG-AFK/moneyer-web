@@ -60,8 +60,8 @@
         .screen { display: none; animation: pop-in 0.3s ease-out; }
         .screen.active { display: flex; }
         
-        .add-transaction-modal, .confirm-modal-container { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; opacity: 0; pointer-events: none; }
-        .add-transaction-modal.active, .confirm-modal-container.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .add-transaction-modal, .confirm-modal-container, .input-modal-container { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; opacity: 0; pointer-events: none; }
+        .add-transaction-modal.active, .confirm-modal-container.active, .input-modal-container.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
         
         .category-icon { opacity: 0; transform: translateY(20px); animation: slide-up-fade-in 0.5s forwards; }
         .category-icon .icon-bg { transition: background-color 0.3s ease, color 0.3s ease; }
@@ -80,6 +80,8 @@
         input:checked + .slider { background-color: #34C759; }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        .budget-progress-bar { transition: background-color 0.5s ease; }
+
         @keyframes pop-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes slide-up-fade-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
     </style>
@@ -92,8 +94,40 @@
         <div id="main-content-area" class="flex-1 overflow-hidden relative">
             
             <div id="screen-home" class="screen h-full flex-col">
-                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><div class="flex justify-between items-center"><div><p class="text-color-secondary">欢迎回来,</p><h1 class="text-2xl font-bold text-color-primary">爱吃土豆</h1></div><img src="https://placehold.co/150x150/E2E8F0/4A5568?text=土豆" alt="avatar" class="w-12 h-12 rounded-full"></div></header>
-                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="animate-pop-in bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 mb-6"><p class="text-sm opacity-80">本月结余</p><p id="home-balance" class="text-4xl font-bold mt-2 bg-gradient-to-r from-white to-blue-200 text-transparent bg-clip-text">¥0.00</p><div class="mt-4 h-2 bg-white/30 rounded-full"><div id="home-progress" class="h-2 bg-white rounded-full w-2/3"></div></div></div><div class="grid grid-cols-2 gap-4 mb-8"><div class="card p-4 rounded-2xl animate-slide-up" style="animation-delay: 100ms;"><div class="flex items-center text-green-500 mb-1"><i class="fas fa-arrow-up mr-2"></i><p class="font-semibold">收入</p></div><p id="home-income" class="text-2xl font-bold text-color-primary">¥0.00</p></div><div class="card p-4 rounded-2xl animate-slide-up" style="animation-delay: 200ms;"><div class="flex items-center text-red-500 mb-1"><i class="fas fa-arrow-down mr-2"></i><p class="font-semibold">支出</p></div><p id="home-expense" class="text-2xl font-bold text-color-primary">¥0.00</p></div></div><h2 class="text-lg font-bold text-color-primary mb-4">最近交易</h2><div id="home-transaction-list" class="space-y-3"></div></main>
+                <main class="flex-1 overflow-y-auto px-6 pt-16 pb-24">
+                    <div class="animate-pop-in bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 mb-6">
+                        <p class="text-sm opacity-80">本月支出</p>
+                        <p id="home-expense-display" class="text-4xl font-bold mt-2">¥0.00</p>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs opacity-80 mb-1">
+                                <span>预算</span>
+                                <span id="home-budget-text">¥0 / ¥5000</span>
+                            </div>
+                            <div class="h-2 bg-white/30 rounded-full">
+                                <div id="home-budget-bar" class="budget-progress-bar h-2 bg-white rounded-full" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="piggy-bank-card" class="card p-4 rounded-2xl mb-6 tap-effect">
+                         <div class="flex justify-between items-center mb-2">
+                             <div class="flex items-center">
+                                 <i class="fas fa-piggy-bank text-2xl text-pink-400 mr-3"></i>
+                                 <div>
+                                     <p class="font-bold text-color-primary">我的储钱罐</p>
+                                     <p id="piggy-bank-goal-name" class="text-xs text-color-secondary">未设置目标</p>
+                                 </div>
+                             </div>
+                             <p id="piggy-bank-amount" class="font-bold text-color-primary">¥0</p>
+                         </div>
+                         <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                            <div id="piggy-bank-progress" class="h-2 bg-pink-400 rounded-full" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-bold text-color-primary mb-4">最近交易</h2>
+                    <div id="home-transaction-list" class="space-y-3"></div>
+                </main>
             </div>
 
             <div id="screen-list" class="screen h-full flex-col">
@@ -110,6 +144,8 @@
                 <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">设置</h1></header>
                 <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-4">
                     <div class="card rounded-2xl p-2">
+                        <div class="flex justify-between items-center p-3 tap-effect" id="budget-settings-btn"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-green-500 text-white flex items-center justify-center mr-3"><i class="fas fa-bullseye"></i></div><span class="text-color-primary font-medium">预算设置</span></div><i class="fas fa-chevron-right text-color-secondary"></i></div>
+                        <div class="border-t mx-3" style="border-color: var(--border-color)"></div>
                         <div class="flex justify-between items-center p-3"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center mr-3"><i class="fas fa-palette"></i></div><span class="text-color-primary font-medium">深色模式</span></div><label class="theme-switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label></div>
                         <div class="border-t mx-3" style="border-color: var(--border-color)"></div>
                         <div class="flex justify-between items-center p-3 tap-effect" id="category-management-btn"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center mr-3"><i class="fas fa-tags"></i></div><span class="text-color-primary font-medium">分类管理</span></div><i class="fas fa-chevron-right text-color-secondary"></i></div>
@@ -131,6 +167,29 @@
                     <div><h2 class="text-lg font-bold text-color-primary mb-2">收入分类</h2><div id="income-category-manage-list" class="space-y-1"></div></div>
                 </div></main>
             </div>
+            
+            <div id="screen-budget" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0 flex items-center"><button id="back-to-settings-from-budget-btn" class="tap-effect text-blue-500 text-lg px-2"><i class="fas fa-chevron-left"></i></button><h1 class="flex-1 text-center text-xl font-bold text-color-primary -ml-8">预算设置</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-6">
+                    <div class="card p-4 rounded-2xl">
+                        <label for="monthly-budget-input" class="text-lg font-bold text-color-primary">月度总预算</label>
+                        <input type="number" id="monthly-budget-input" class="w-full mt-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如: 5000">
+                    </div>
+                    <div><h2 class="text-lg font-bold text-color-primary mb-2">分类预算</h2><div id="category-budget-list" class="space-y-2"></div></div>
+                </div></main>
+            </div>
+            
+             <div id="screen-piggy-bank" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0 flex items-center"><button id="back-to-home-from-piggy-btn" class="tap-effect text-blue-500 text-lg px-2"><i class="fas fa-chevron-left"></i></button><h1 class="flex-1 text-center text-xl font-bold text-color-primary -ml-8">我的储钱罐</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24 flex flex-col justify-between"><div class="space-y-6">
+                     <div class="card p-6 rounded-2xl text-center">
+                        <p class="text-color-secondary">目标: <span id="piggy-goal-name-display" class="font-bold text-color-primary">买新手机</span></p>
+                        <p id="piggy-goal-amount-display" class="text-4xl font-bold text-color-primary my-4">¥0 / ¥6999</p>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-full"><div id="piggy-goal-progress" class="h-4 bg-pink-400 rounded-full" style="width: 10%;"></div></div>
+                     </div>
+                     <button id="set-piggy-goal-btn" class="w-full card p-3 rounded-lg text-blue-500 font-bold tap-effect">设置新目标</button>
+                </div><button id="deposit-to-piggy-btn" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold text-lg tap-effect">存一笔</button></main>
+            </div>
 
         </div>
         
@@ -139,6 +198,8 @@
         <div id="add-transaction-modal" class="add-transaction-modal absolute inset-0 z-30"><div class="absolute inset-0 bg-black/30 backdrop-blur-md"></div><div id="modal-content" class="modal-bg absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 ios-safe-area-bottom flex flex-col h-[90%]"><div class="flex justify-center mb-3"><div class="w-10 h-1.5 bg-gray-300 rounded-full"></div></div><div class="relative self-center bg-gray-200 dark:bg-gray-700 p-1 rounded-full flex space-x-1 mb-4"><div id="type-switcher-bg" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-0.25rem)] card rounded-full shadow-sm transition-transform duration-300 ease-in-out"></div><button id="type-expense" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-primary z-10">支出</button><button id="type-income" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-secondary z-10">收入</button></div><div class="text-center my-4"><span id="amount-display" class="text-5xl font-bold text-color-primary">¥0.00</span></div><div class="mb-4"><p class="text-sm font-semibold text-color-secondary px-2 mb-2">选择分类</p><div id="category-list" class="flex space-x-4 overflow-x-auto pb-3 px-2"></div></div><div class="grid grid-cols-4 gap-2 text-2xl font-medium text-center flex-1"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">1</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">2</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">3</button><input type="text" id="remark-input" placeholder="添加备注..." class="tap-effect card text-color-primary rounded-xl text-sm text-center placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">4</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">5</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">6</button><button class="keypad-btn tap-effect card rounded-xl flex justify-center items-center text-blue-600 font-bold">今天</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">7</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">8</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">9</button><button id="save-btn" rowspan="2" class="keypad-btn tap-effect bg-blue-600 text-white rounded-xl flex justify-center items-center row-span-2 text-lg font-bold">完成</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">.</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">0</button><button id="backspace-btn" class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center"><i class="fas fa-backspace text-color-secondary"></i></button></div></div></div>
         
         <div id="confirm-modal-container" class="confirm-modal-container absolute inset-0 z-40"><div class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8"><div class="card rounded-2xl p-6 w-full max-w-sm text-center"><h2 id="confirm-title" class="text-lg font-bold text-color-primary mb-2"></h2><p id="confirm-message" class="text-sm text-color-secondary mb-6"></p><div class="flex space-x-4"><button id="confirm-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 text-color-primary font-bold py-3 rounded-lg tap-effect">取消</button><button id="confirm-ok-btn" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-lg tap-effect">确认</button></div></div></div></div>
+
+        <div id="input-modal-container" class="input-modal-container absolute inset-0 z-40"><div class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8"><div class="card rounded-2xl p-6 w-full max-w-sm"><h2 id="input-title" class="text-lg font-bold text-color-primary mb-4"></h2><div id="input-fields"></div><div class="flex space-x-4 mt-6"><button id="input-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 text-color-primary font-bold py-3 rounded-lg tap-effect">取消</button><button id="input-ok-btn" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg tap-effect">保存</button></div></div></div></div>
 
         <div id="custom-alert" class="absolute inset-x-0 top-0 flex justify-center items-start pt-16 z-50 pointer-events-none opacity-0 transition-opacity duration-300"><div class="bg-black/70 text-white text-sm font-semibold px-6 py-3 rounded-full shadow-lg"><p id="alert-message"></p></div></div>
     </div>
@@ -164,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { name: '医药', icon: 'fas fa-pills', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
         { name: '居住', icon: 'fas fa-home', color: '#0EA5E9', bgColor: 'bg-sky-100', textColor: 'text-sky-500' },
         { name: '娱乐', icon: 'fas fa-film', color: '#8B5CF6', bgColor: 'bg-violet-100', textColor: 'text-violet-500' },
+        { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
     ];
     let incomeCategories = [
         { name: '工资', icon: 'fas fa-briefcase', color: '#22C55E', bgColor: 'bg-green-100', textColor: 'text-green-500' },
@@ -177,7 +239,10 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: genId(), type: 'expense', category: '餐饮', amount: 25.50, remark: '午餐', date: new Date().toISOString().split('T')[0] },
     ];
 
-    const mainContentArea = document.getElementById('main-content-area');
+    let monthlyBudget = 5000;
+    let categoryBudgets = { '餐饮': 1500, '购物': 1000 };
+    let piggyBank = { goalName: '买新手机', goalAmount: 6999, savedAmount: 700 };
+
     const modal = document.getElementById('add-transaction-modal');
     const customAlert = document.getElementById('custom-alert');
     const alertMessage = document.getElementById('alert-message');
@@ -216,11 +281,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (screenId === 'screen-analytics') renderAnalyticsPage();
         if (screenId === 'screen-home') renderHomePage();
         if (screenId === 'screen-category-management') renderCategoryManagementPage();
+        if (screenId === 'screen-budget') renderBudgetPage();
+        if (screenId === 'screen-piggy-bank') renderPiggyBankPage();
     }
     
     function renderAll() {
         renderHomePage();
         renderTransactionList();
+        renderPiggyBankPage(); // Also update piggy bank display
     }
     
     function calculateTotals(period) {
@@ -234,7 +302,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 shouldInclude = true;
             }
             if (shouldInclude) {
-                acc[t.type] += t.amount;
+                if(t.category !== '存钱') { // Exclude savings from income/expense
+                    acc[t.type] += t.amount;
+                }
             }
             return acc;
         }, { income: 0, expense: 0 });
@@ -242,21 +312,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderHomePage() {
         const totals = calculateTotals('month');
-        const balance = totals.income - totals.expense;
-        const homeBalance = document.getElementById('home-balance');
-        if(homeBalance) homeBalance.textContent = `¥${balance.toFixed(2)}`;
-        const homeIncome = document.getElementById('home-income');
-        if(homeIncome) homeIncome.textContent = `¥${totals.income.toFixed(2)}`;
-        const homeExpense = document.getElementById('home-expense');
-        if(homeExpense) homeExpense.textContent = `¥${totals.expense.toFixed(2)}`;
-        const progress = totals.income > 0 ? (totals.expense / totals.income) * 100 : 0;
-        const homeProgress = document.getElementById('home-progress');
-        if(homeProgress) homeProgress.style.width = `${Math.min(progress, 100)}%`;
+        const homeExpenseDisplay = document.getElementById('home-expense-display');
+        if(homeExpenseDisplay) homeExpenseDisplay.textContent = `¥${totals.expense.toFixed(2)}`;
+
+        const homeBudgetBar = document.getElementById('home-budget-bar');
+        const homeBudgetText = document.getElementById('home-budget-text');
+        const expenseRatio = monthlyBudget > 0 ? (totals.expense / monthlyBudget) * 100 : 0;
+        if(homeBudgetBar) homeBudgetBar.style.width = `${Math.min(expenseRatio, 100)}%`;
+        if(homeBudgetText) homeBudgetText.textContent = `¥${totals.expense.toFixed(2)} / ¥${monthlyBudget}`;
+        if (expenseRatio > 100) {
+            homeBudgetBar?.classList.remove('bg-white');
+            homeBudgetBar?.classList.add('bg-red-500');
+        } else {
+            homeBudgetBar?.classList.add('bg-white');
+            homeBudgetBar?.classList.remove('bg-red-500');
+        }
         
         const homeList = document.getElementById('home-transaction-list');
         if(!homeList) return;
         homeList.innerHTML = '';
-        transactions.slice(0, 3).forEach((t, index) => {
+        transactions.filter(t => t.category !== '存钱').slice(0, 3).forEach((t, index) => {
             const info = getCategoryInfo(t.category, t.type);
             const item = document.createElement('div');
             item.className = 'card p-4 rounded-2xl flex items-center justify-between tap-effect animate-slide-up';
@@ -435,22 +510,30 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('nav-settings')?.addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-settings'); });
     document.getElementById('category-management-btn')?.addEventListener('click', () => showScreen('screen-category-management'));
     document.getElementById('back-to-settings-btn')?.addEventListener('click', () => showScreen('screen-settings'));
-    
+    document.getElementById('budget-settings-btn')?.addEventListener('click', () => showScreen('screen-budget'));
+    document.getElementById('back-to-settings-from-budget-btn')?.addEventListener('click', () => showScreen('screen-settings'));
+    document.getElementById('piggy-bank-card')?.addEventListener('click', () => showScreen('screen-piggy-bank'));
+    document.getElementById('back-to-home-from-piggy-btn')?.addEventListener('click', () => showScreen('screen-home'));
+
     const confirmModal = document.getElementById('confirm-modal-container');
-    document.getElementById('clear-data-btn')?.addEventListener('click', () => {
+    const confirmOkBtn = document.getElementById('confirm-ok-btn');
+    let confirmCallback = () => {};
+
+    function showConfirmModal(title, message, onConfirm) {
         const confirmTitle = document.getElementById('confirm-title');
         const confirmMessage = document.getElementById('confirm-message');
-        if(confirmTitle) confirmTitle.textContent = '确认清除';
-        if(confirmMessage) confirmMessage.textContent = '此操作将永久删除所有交易记录，无法恢复。您确定要继续吗？';
+        if(confirmTitle) confirmTitle.textContent = title;
+        if(confirmMessage) confirmMessage.textContent = message;
         confirmModal?.classList.add('active');
+        confirmCallback = onConfirm;
+    }
+
+    document.getElementById('clear-data-btn')?.addEventListener('click', () => {
+        showConfirmModal( '确认清除', '此操作将永久删除所有交易记录，无法恢复。您确定要继续吗？', () => { transactions = []; renderAll(); showAlert('所有数据已清除'); confirmModal?.classList.remove('active'); });
     });
+    
+    confirmOkBtn?.addEventListener('click', () => { if(confirmCallback) confirmCallback(); });
     document.getElementById('confirm-cancel-btn')?.addEventListener('click', () => confirmModal?.classList.remove('active'));
-    document.getElementById('confirm-ok-btn')?.addEventListener('click', () => {
-        transactions = [];
-        renderAll();
-        showAlert('所有数据已清除');
-        confirmModal?.classList.remove('active');
-    });
 
     function renderCategoryManagementPage() {
         const expenseList = document.getElementById('expense-category-manage-list');
@@ -460,15 +543,156 @@ document.addEventListener('DOMContentLoaded', function () {
         incomeList.innerHTML = '';
         
         [expenseCategories, incomeCategories].forEach((list, index) => {
+            const type = index === 0 ? 'expense' : 'income';
             const targetEl = index === 0 ? expenseList : incomeList;
             list.forEach(cat => {
                 const item = document.createElement('div');
                 item.className = 'card flex items-center justify-between p-3 rounded-lg';
-                item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${cat.bgColor} flex items-center justify-center mr-3"><i class="${cat.icon} ${cat.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><div class="flex items-center space-x-4"><i class="fas fa-trash-alt text-red-500 cursor-pointer tap-effect"></i><i class="fas fa-bars text-color-secondary cursor-grab"></i></div>`;
+                item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${cat.bgColor} flex items-center justify-center mr-3"><i class="${cat.icon} ${cat.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><div class="flex items-center space-x-4"><i class="fas fa-trash-alt text-red-500 cursor-pointer tap-effect" data-name="${cat.name}" data-type="${type}"></i><i class="fas fa-bars text-color-secondary cursor-grab"></i></div>`;
                 targetEl.appendChild(item);
             });
         });
+
+        document.querySelectorAll('#expense-category-manage-list .fa-trash-alt, #income-category-manage-list .fa-trash-alt').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget;
+                const categoryName = target.dataset.name;
+                const categoryType = target.dataset.type;
+                if (categoryName === '其他') { showAlert('“其他”分类无法删除'); return; }
+
+                showConfirmModal( '删除分类', `确定要删除“${categoryName}”分类吗？所有属于此分类的账单将被归入“其他”。`, () => {
+                    transactions.forEach(t => { if (t.category === categoryName && t.type === categoryType) { t.category = '其他'; } });
+                    if (categoryType === 'expense') { expenseCategories = expenseCategories.filter(c => c.name !== categoryName); } else { incomeCategories = incomeCategories.filter(c => c.name !== categoryName); }
+                    renderCategoryManagementPage(); renderAll(); showAlert(`分类“${categoryName}”已删除`); confirmModal?.classList.remove('active');
+                });
+            });
+        });
     }
+
+    function renderBudgetPage() {
+        const monthlyInput = document.getElementById('monthly-budget-input');
+        if(monthlyInput) monthlyInput.value = monthlyBudget;
+        monthlyInput?.addEventListener('change', (e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && value >= 0) {
+                monthlyBudget = value;
+                renderHomePage(); // Update home page budget display
+            }
+        });
+
+        const categoryBudgetList = document.getElementById('category-budget-list');
+        if(!categoryBudgetList) return;
+        categoryBudgetList.innerHTML = '';
+        expenseCategories.forEach(cat => {
+            if(cat.name === '其他') return;
+            const item = document.createElement('div');
+            item.className = 'card flex items-center justify-between p-3 rounded-lg';
+            const info = getCategoryInfo(cat.name, 'expense');
+            item.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-lg ${info.bgColor} flex items-center justify-center mr-3"><i class="${info.icon} ${info.textColor}"></i></div>
+                    <span class="text-color-primary font-medium">${cat.name}</span>
+                </div>
+                <input type="number" class="w-24 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary text-right focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="未设置" value="${categoryBudgets[cat.name] || ''}">
+            `;
+            const input = item.querySelector('input');
+            input?.addEventListener('change', (e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value >= 0) {
+                    categoryBudgets[cat.name] = value;
+                } else {
+                    delete categoryBudgets[cat.name];
+                }
+            });
+            categoryBudgetList.appendChild(item);
+        });
+    }
+
+    function renderPiggyBankPage() {
+        const goalNameEl = document.getElementById('piggy-goal-name-display');
+        const goalAmountEl = document.getElementById('piggy-goal-amount-display');
+        const progressEl = document.getElementById('piggy-goal-progress');
+        const piggyAmountEl = document.getElementById('piggy-bank-amount');
+        const piggyGoalNameCardEl = document.getElementById('piggy-bank-goal-name');
+        
+        if (goalNameEl) goalNameEl.textContent = piggyBank.goalName;
+        if (goalAmountEl) goalAmountEl.textContent = `¥${piggyBank.savedAmount} / ¥${piggyBank.goalAmount}`;
+        const progress = piggyBank.goalAmount > 0 ? (piggyBank.savedAmount / piggyBank.goalAmount) * 100 : 0;
+        if (progressEl) progressEl.style.width = `${Math.min(progress, 100)}%`;
+
+        // Update home card as well
+        if (piggyAmountEl) piggyAmountEl.textContent = `¥${piggyBank.savedAmount}`;
+        if (piggyGoalNameCardEl) piggyGoalNameCardEl.textContent = piggyBank.goalName;
+        const cardProgressEl = document.getElementById('piggy-bank-progress');
+        if (cardProgressEl) cardProgressEl.style.width = `${Math.min(progress, 100)}%`;
+    }
+
+    document.getElementById('deposit-to-piggy-btn')?.addEventListener('click', () => {
+        showInputModal(
+            '存一笔钱',
+            [{id: 'deposit-amount', label: '存入金额', type: 'number', placeholder: '例如: 100'}],
+            (values) => {
+                const amount = parseFloat(values['deposit-amount']);
+                if (!isNaN(amount) && amount > 0) {
+                    piggyBank.savedAmount += amount;
+                    // Optionally create a transaction for this
+                    const newTransaction = { id: genId(), type: 'expense', category: '存钱', amount: amount, remark: `存入${piggyBank.goalName}`, date: new Date().toISOString().split('T')[0] };
+                    transactions.unshift(newTransaction);
+                    renderAll();
+                    showAlert(`成功存入 ¥${amount}`);
+                }
+            }
+        );
+    });
+
+    document.getElementById('set-piggy-goal-btn')?.addEventListener('click', () => {
+        showInputModal(
+            '设置新目标',
+            [
+                {id: 'goal-name', label: '目标名称', type: 'text', placeholder: '例如: 买新手机'},
+                {id: 'goal-amount', label: '目标金额', type: 'number', placeholder: '例如: 6999'}
+            ],
+            (values) => {
+                const name = values['goal-name'];
+                const amount = parseFloat(values['goal-amount']);
+                if (name && !isNaN(amount) && amount > 0) {
+                    piggyBank.goalName = name;
+                    piggyBank.goalAmount = amount;
+                    piggyBank.savedAmount = 0; // Reset savings for new goal
+                    renderPiggyBankPage();
+                    showAlert('新目标已设置！');
+                }
+            }
+        );
+    });
+    
+    const inputModal = document.getElementById('input-modal-container');
+    let inputCallback = () => {};
+
+    function showInputModal(title, fields, onConfirm) {
+        const titleEl = document.getElementById('input-title');
+        const fieldsEl = document.getElementById('input-fields');
+        if (titleEl) titleEl.textContent = title;
+        if (fieldsEl) {
+            fieldsEl.innerHTML = '';
+            fields.forEach(field => {
+                fieldsEl.innerHTML += `<label for="${field.id}" class="block text-sm font-medium text-color-secondary mb-1">${field.label}</label><input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3">`;
+            });
+        }
+        inputModal?.classList.add('active');
+        inputCallback = () => {
+            const values = {};
+            fields.forEach(field => {
+                values[field.id] = document.getElementById(field.id)?.value;
+            });
+            onConfirm(values);
+            inputModal?.classList.remove('active');
+        };
+    }
+
+    document.getElementById('input-ok-btn')?.addEventListener('click', () => inputCallback());
+    document.getElementById('input-cancel-btn')?.addEventListener('click', () => inputModal?.classList.remove('active'));
+
 
     const savedTheme = localStorage.getItem('moneyer-theme');
     applyTheme(savedTheme === 'dark');
