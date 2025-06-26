@@ -2,83 +2,74 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Moneyer App - Prototype</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Moneyer App</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1F2937">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/3B82F6/FFFFFF?text=M">
+    <meta id="theme-color-meta" name="theme-color" content="#F7F7F7">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/3B82F6/FFFFFF?text=M&font=sans-serif">
     <link rel="manifest" href="manifest.json">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         :root {
-            --bg-primary: #F7F7F7;
-            --bg-secondary: #FFFFFF;
-            --bg-tertiary: #F1F1F6;
-            --text-primary: #1F2937;
-            --text-secondary: #6B7280;
-            --border-color: rgba(229, 231, 235, 0.8);
-            --shadow-color: rgba(30, 41, 59, 0.05);
+            --bg-primary: #F7F7F7; --bg-secondary: #FFFFFF; --bg-tertiary: #F1F1F6;
+            --text-primary: #1F2937; --text-secondary: #6B7280;
+            --border-color: rgba(229, 231, 235, 0.8); --shadow-color: rgba(30, 41, 59, 0.05);
+            --theme-color-light: #F7F7F7; --theme-color-dark: #121212;
         }
         .dark {
-            --bg-primary: #121212;
-            --bg-secondary: #1E1E1E;
-            --bg-tertiary: #2C2C2E;
-            --text-primary: #E5E7EB;
-            --text-secondary: #9CA3AF;
-            --border-color: rgba(55, 65, 81, 0.8);
-            --shadow-color: rgba(0, 0, 0, 0.2);
+            --bg-primary: #121212; --bg-secondary: #1E1E1E; --bg-tertiary: #2C2C2E;
+            --text-primary: #E5E7EB; --text-secondary: #9CA3AF;
+            --border-color: rgba(55, 65, 81, 0.8); --shadow-color: rgba(0, 0, 0, 0.2);
         }
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
+        html, body { height: 100%; overflow: hidden; }
         body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
             background-color: var(--bg-primary);
         }
-        .app-container {
-            height: 100dvh; /* Use dynamic viewport height */
-            background-color: var(--bg-primary);
-            transition: background-color 0.3s ease;
-            max-width: 640px; /* Add max-width for better desktop viewing */
-            margin: 0 auto; /* Center on larger screens */
+        #loader {
+            display: flex; justify-content: center; align-items: center; position: fixed; inset: 0;
+            background-color: var(--bg-primary); z-index: 100; transition: opacity 0.3s ease-in-out;
         }
-        .card, .header-card {
-            background-color: var(--bg-secondary);
-            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
-            transition: background-color 0.3s ease;
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #3B82F6; border-radius: 50%; animation: spin 1s linear infinite;
         }
+        .dark .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3B82F6; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .app-container { height: 100dvh; background-color: var(--bg-primary); transition: background-color 0.3s ease; max-width: 640px; margin: 0 auto; }
+        .card, .header-card { background-color: var(--bg-secondary); box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color); transition: background-color 0.3s ease; }
         .text-color-primary { color: var(--text-primary); }
         .text-color-secondary { color: var(--text-secondary); }
         .modal-bg { background-color: var(--bg-tertiary); }
-        
         .ios-safe-area-top { padding-top: env(safe-area-inset-top, 1rem); }
         .ios-safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 1rem); }
         .tap-effect { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .tap-effect:active { transform: scale(0.96); }
-        
         .screen { display: none; animation: pop-in 0.3s ease-out; }
         .screen.active { display: flex; }
-        
         .add-transaction-modal, .confirm-modal-container, .input-modal-container { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; opacity: 0; pointer-events: none; }
         .add-transaction-modal.active, .confirm-modal-container.active, .input-modal-container.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
         
-        .category-icon { opacity: 0; transform: translateY(20px); animation: slide-up-fade-in 0.5s forwards; }
-        .category-icon .icon-bg { transition: background-color 0.3s ease, color 0.3s ease; }
-        .category-icon.selected .icon-bg { background-color: var(--category-color, #3B82F6); }
-        .category-icon.selected .icon-bg i { color: white !important; }
+        .category-item .icon-bg { transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease; }
+        .category-item:active .icon-bg { transform: scale(0.95); }
+        .category-item.selected .icon-bg { background-color: var(--category-color, #3B82F6); box-shadow: 0 4px 12px -1px var(--shadow-color); }
+        .category-item.selected .icon-bg i { color: white !important; }
+
         .swipe-wrapper { position: relative; overflow: hidden; border-radius: 0.75rem; }
-        .swipe-content { transition: transform 0.3s ease-out; will-change: transform; }
-        .delete-action { position: absolute; top: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background-color: #EF4444; color: white; width: 80px; transform: translateX(100%); transition: transform 0.3s ease-out; will-change: transform; }
-        .swipe-wrapper.swiped .swipe-content { transform: translateX(-80px); }
-        .swipe-wrapper.swiped .delete-action { transform: translateX(0); }
+        .swipe-content { transition: transform 0.3s ease-out; will-change: transform; background-color: var(--bg-secondary); }
+        .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; transform: translateX(100%); transition: transform 0.3s ease-out; }
+        .swipe-action-btn { display: flex; align-items: center; justify-content: center; width: 80px; color: white; font-weight: 600; cursor: pointer; }
+        .action-cancel { background-color: #9CA3AF; }
+        .action-delete { background-color: #EF4444; }
+        .swipe-wrapper.swiped .swipe-content { transform: translateX(-160px); }
+        .swipe-wrapper.swiped .swipe-actions { transform: translateX(0); }
         
         .theme-switch { position: relative; display: inline-block; width: 51px; height: 31px; }
         .theme-switch input { opacity: 0; width: 0; height: 0; }
@@ -87,30 +78,60 @@
         input:checked + .slider { background-color: #34C759; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .budget-progress-bar { transition: background-color 0.5s ease; }
+        #screen-budget input[type="number"] { background-color: #E0F2FE; border: 1px solid #7DD3FC; transition: all 0.2s ease-in-out; }
+        #screen-budget input[type="number"]:focus { background-color: #F0F9FF; border-color: #0EA5E9; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3); }
+        .dark #screen-budget input[type="number"] { background-color: #0C4A6E; border: 1px solid #38BDF8; }
+        .dark #screen-budget input[type="number"]:focus { background-color: #075985; border-color: #7DD3FC; box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.3); }
 
-        @keyframes pop-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes slide-up-fade-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        /* MODIFICATION: Keypad styles with pinkish gradient */
+        .keypad-btn-gradient-text {
+            background: linear-gradient(135deg, #F472B6, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            font-weight: 600;
+        }
+        .dark .keypad-btn-gradient-text {
+            background: linear-gradient(135deg, #FBCFE8, #F9A8D4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; text-fill-color: transparent;
+        }
+        .keypad-btn-gradient-bg {
+             background: linear-gradient(135deg, #2563EB, #60A5FA);
+             color: white;
+             border: none;
+             transition: all 0.2s ease-out;
+             font-weight: 600;
+        }
+        .keypad-btn-gradient-bg:active {
+            transform: scale(0.96);
+            filter: brightness(1.1);
+        }
+        #keypad-grid .keypad-btn {
+            height: 56px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-black">
+    <div id="loader"><div class="spinner"></div></div>
 
-    <div id="app-container" class="app-container w-full h-full shadow-2xl overflow-hidden relative flex flex-col">
+    <div id="app-container" class="app-container w-full h-full overflow-hidden relative flex flex-col opacity-0">
 
         <div id="main-content-area" class="flex-1 overflow-hidden relative">
             
             <div id="screen-home" class="screen h-full flex-col">
-                <main class="flex-1 overflow-y-auto px-6 pt-16 pb-24">
+                <main class="flex-1 overflow-y-auto px-6 pt-6 pb-24 ios-safe-area-top">
                     <div class="animate-pop-in bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 dark:shadow-blue-900 mb-6">
                         <p class="text-sm opacity-80">本月支出</p>
                         <p id="home-expense-display" class="text-4xl font-bold mt-2">¥0.00</p>
                         <div class="mt-4">
                             <div class="flex justify-between text-xs opacity-80 mb-1">
                                 <span>预算</span>
-                                <span id="home-budget-text">¥0 / ¥3000</span>
+                                <span id="home-budget-text">¥0.00 / ¥3000.00</span>
                             </div>
                             <div class="h-2 bg-white/30 rounded-full">
-                                <div id="home-budget-bar" class="budget-progress-bar h-2 bg-white rounded-full" style="width: 0%;"></div>
+                                <div id="home-budget-bar" class="h-2 bg-white rounded-full transition-all duration-500" style="width: 0%;"></div>
                             </div>
                         </div>
                     </div>
@@ -126,37 +147,60 @@
                              </div>
                              <p id="piggy-bank-amount" class="font-bold text-color-primary">¥0.00</p>
                          </div>
-                         <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                            <div id="piggy-bank-progress" class="h-2 bg-pink-400 rounded-full" style="width: 0%;"></div>
-                        </div>
+                         <div class="flex items-center gap-x-2 mt-1">
+                            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full flex-1">
+                               <div id="piggy-bank-progress" class="h-2 bg-pink-400 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                           </div>
+                           <span id="piggy-bank-percentage" class="text-xs font-semibold text-pink-500">0%</span>
+                         </div>
                     </div>
 
-                    <h2 class="text-lg font-bold text-color-primary mb-4">最近交易</h2>
-                    <div id="home-transaction-list" class="space-y-3">
-                        <div class="text-center py-10 text-color-secondary">
-                            <i class="fas fa-receipt text-4xl mb-3"></i>
-                            <p>还没有任何交易记录</p>
-                        </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-color-primary">最近交易</h2>
+                        <button id="view-all-transactions-btn" class="text-sm text-blue-500 font-semibold tap-effect">查看全部</button>
                     </div>
+                    <div id="home-transaction-list" class="space-y-3"></div>
+                </main>
+            </div>
+            
+            <div id="screen-transaction-history" class="screen h-full flex-col">
+                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0 flex items-center">
+                    <button id="back-to-home-from-history-btn" class="tap-effect text-blue-500 text-lg px-2"><i class="fas fa-chevron-left"></i></button>
+                    <h1 class="flex-1 text-center text-xl font-bold text-color-primary -ml-8">收支明细</h1>
+                </header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24">
+                    <div class="header-card mb-4 p-3 rounded-2xl flex justify-around text-center"><div><p class="text-sm text-color-secondary">本月支出</p><p id="list-total-expense" class="font-bold text-lg text-red-500">¥0.00</p></div><div class="border-l mx-2 border-gray-200 dark:border-gray-700"></div><div><p class="text-sm text-color-secondary">本月收入</p><p id="list-total-income" class="font-bold text-lg text-green-500">¥0.00</p></div></div>
+                    <div id="full-transaction-list" class="space-y-1"></div>
                 </main>
             </div>
 
-            <div id="screen-list" class="screen h-full flex-col">
-                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">收支明细</h1><div class="header-card mt-4 p-3 rounded-2xl flex justify-around text-center"><div><p class="text-sm text-color-secondary">本月支出</p><p id="list-total-expense" class="font-bold text-lg text-red-500">¥0.00</p></div><div class="border-l mx-2 border-gray-200 dark:border-gray-700"></div><div><p class="text-sm text-color-secondary">本月收入</p><p id="list-total-income" class="font-bold text-lg text-green-500">¥0.00</p></div></div></header>
-                <main id="list-main-content" class="flex-1 overflow-y-auto px-6 pt-4 pb-24"></main>
-            </div>
-
             <div id="screen-analytics" class="screen h-full flex-col">
-                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">统计分析</h1></header>
-                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="flex justify-center mb-6"><div class="card p-1 rounded-full flex space-x-1"><button id="monthly-btn" class="switcher-btn active px-8 py-1.5 text-sm font-semibold rounded-full bg-blue-600 text-white shadow-md">月</button><button id="yearly-btn" class="switcher-btn px-8 py-1.5 text-sm font-semibold rounded-full text-color-secondary">年</button></div></div><div class="flex justify-center items-center mb-8"><div class="relative h-[280px] w-[280px]"><canvas id="expenseChart"></canvas><div id="chart-center-text" class="absolute inset-0 flex flex-col justify-center items-center pointer-events-none"><p class="text-color-secondary text-sm">本月总支出</p><p id="chart-total" class="text-3xl font-bold text-color-primary">¥0.00</p></div></div></div><div id="analytics-category-list" class="space-y-3"></div></main>
+                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">统计分析</h1></header>
+                <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24 space-y-6">
+                    <div class="card p-2 flex justify-between items-center">
+                        <button id="prev-period-btn" class="tap-effect p-3 text-color-secondary"><i class="fas fa-chevron-left"></i></button>
+                        <div id="period-toggle" class="text-center cursor-pointer">
+                            <p id="current-period-display" class="font-bold text-lg text-color-primary">2025年 6月</p>
+                            <p class="text-xs text-blue-500 font-semibold">切换视图</p>
+                        </div>
+                        <button id="next-period-btn" class="tap-effect p-3 text-color-secondary"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <div id="analytics-summary-card" class="card p-4 grid grid-cols-3 divide-x divide-gray-200 dark:divide-gray-700 text-center">
+                        <div><p class="text-sm text-color-secondary">总收入</p><p id="summary-income" class="font-bold text-lg text-green-500">¥0.00</p></div>
+                        <div><p class="text-sm text-color-secondary">总支出</p><p id="summary-expense" class="font-bold text-lg text-red-500">¥0.00</p></div>
+                        <div><p class="text-sm text-color-secondary">结余</p><p id="summary-balance" class="font-bold text-lg text-color-primary">¥0.00</p></div>
+                    </div>
+
+                    <div class="flex justify-center items-center"><div class="relative h-[280px] w-[280px]"><canvas id="expenseChart"></canvas><div id="chart-center-text" class="absolute inset-0 flex flex-col justify-center items-center pointer-events-none"><p class="text-color-secondary text-sm">期间总支出</p><p id="chart-total" class="text-3xl font-bold text-color-primary">¥0.00</p></div></div></div>
+                    <div id="analytics-category-list" class="space-y-3"></div>
+                </main>
             </div>
             
             <div id="screen-settings" class="screen h-full flex-col">
                 <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">设置</h1></header>
                 <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-4">
                     <div class="card rounded-2xl p-2">
-                        <div id="budget-settings-btn" class="flex justify-between items-center p-3 tap-effect"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-green-500 text-white flex items-center justify-center mr-3"><i class="fas fa-bullseye"></i></div><span class="text-color-primary font-medium">预算设置</span></div><i class="fas fa-chevron-right text-color-secondary"></i></div>
-                        <div class="border-t mx-3" style="border-color: var(--border-color)"></div>
                         <div class="flex justify-between items-center p-3"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-purple-500 text-white flex items-center justify-center mr-3"><i class="fas fa-palette"></i></div><span class="text-color-primary font-medium">深色模式</span></div><label class="theme-switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label></div>
                         <div class="border-t mx-3" style="border-color: var(--border-color)"></div>
                         <div id="category-management-btn" class="flex justify-between items-center p-3 tap-effect"><div class="flex items-center"><div class="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center mr-3"><i class="fas fa-tags"></i></div><span class="text-color-primary font-medium">分类管理</span></div><i class="fas fa-chevron-right text-color-secondary"></i></div>
@@ -180,11 +224,11 @@
             </div>
             
             <div id="screen-budget" class="screen h-full flex-col">
-                <header class="ios-safe-area-top px-4 pt-5 pb-3 shrink-0 flex items-center"><button id="back-to-settings-from-budget-btn" class="tap-effect text-blue-500 text-lg px-2"><i class="fas fa-chevron-left"></i></button><h1 class="flex-1 text-center text-xl font-bold text-color-primary -ml-8">预算设置</h1></header>
+                <header class="ios-safe-area-top px-6 pt-5 pb-3 shrink-0"><h1 class="text-center text-xl font-bold text-color-primary">预算设置</h1></header>
                 <main class="flex-1 overflow-y-auto px-6 pt-4 pb-24"><div class="space-y-6">
                     <div class="card p-4 rounded-2xl">
                         <label for="monthly-budget-input" class="text-lg font-bold text-color-primary">月度总预算</label>
-                        <input type="number" id="monthly-budget-input" class="w-full mt-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如: 3000">
+                        <input type="number" id="monthly-budget-input" class="w-full mt-2 p-3 rounded-lg text-color-primary focus:outline-none" placeholder="例如: 3000">
                     </div>
                     <div><h2 class="text-lg font-bold text-color-primary mb-2">分类预算</h2><div id="category-budget-list" class="space-y-2"></div></div>
                 </div></main>
@@ -196,598 +240,549 @@
                      <div class="card p-6 rounded-2xl text-center">
                         <p class="text-color-secondary">目标: <span id="piggy-goal-name-display" class="font-bold text-color-primary">我的小金库</span></p>
                         <p id="piggy-goal-amount-display" class="text-4xl font-bold text-color-primary my-4">¥0.00 / ¥1000.00</p>
-                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-full"><div id="piggy-goal-progress" class="h-4 bg-pink-400 rounded-full" style="width: 0%;"></div></div>
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-full"><div id="piggy-goal-progress" class="h-4 bg-pink-400 rounded-full transition-all duration-500" style="width: 0%;"></div></div>
+                        <p id="piggy-goal-percentage" class="text-pink-500 font-semibold mt-2">0%</p>
                      </div>
                      <button id="set-piggy-goal-btn" class="w-full card p-3 rounded-lg text-blue-500 font-bold tap-effect">设置新目标</button>
                 </div><button id="deposit-to-piggy-btn" class="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold text-lg tap-effect">存一笔</button></main>
             </div>
-
         </div>
         
-        <footer class="absolute bottom-0 left-0 right-0 h-[88px] ios-safe-area-bottom z-20" style="background-color: var(--bg-tertiary-translucent, rgba(241, 241, 246, 0.7)); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color);"><nav class="flex justify-around items-center h-full px-4"><a href="#" id="nav-home" class="nav-item flex flex-col items-center text-blue-600 font-semibold tap-effect"><i class="fas fa-home text-2xl"></i><span class="text-xs mt-1">首页</span></a><a href="#" id="nav-list" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-list-ul text-2xl"></i><span class="text-xs mt-1">明细</span></a><a href="#" id="nav-add" class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-blue-300 dark:shadow-blue-900 tap-effect"><i class="fas fa-plus text-white text-3xl"></i></a><a href="#" id="nav-analytics" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-chart-pie text-2xl"></i><span class="text-xs mt-1">统计</span></a><a href="#" id="nav-settings" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-cog text-2xl"></i><span class="text-xs mt-1">设置</span></a></nav></footer>
+        <footer class="absolute bottom-0 left-0 right-0 h-[88px] ios-safe-area-bottom z-20" style="background-color: var(--bg-tertiary-translucent, rgba(241, 241, 246, 0.7)); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color);">
+            <nav class="flex justify-around items-center h-full px-4">
+                <a href="#" id="nav-home" class="nav-item flex flex-col items-center text-blue-600 font-semibold tap-effect"><i class="fas fa-home text-2xl"></i><span class="text-xs mt-1">首页</span></a>
+                <a href="#" id="nav-budget" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-wallet text-2xl"></i><span class="text-xs mt-1">预算</span></a>
+                <a href="#" id="nav-add" class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center -mt-8 shadow-lg shadow-blue-300 dark:shadow-blue-900 tap-effect"><i class="fas fa-plus text-white text-3xl"></i></a>
+                <a href="#" id="nav-analytics" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-chart-pie text-2xl"></i><span class="text-xs mt-1">统计</span></a>
+                <a href="#" id="nav-settings" class="nav-item flex flex-col items-center text-color-secondary tap-effect"><i class="fas fa-cog text-2xl"></i><span class="text-xs mt-1">设置</span></a>
+            </nav>
+        </footer>
         
-        <div id="add-transaction-modal" class="add-transaction-modal absolute inset-0 z-30"><div class="absolute inset-0 bg-black/30 backdrop-blur-md"></div><div id="modal-content" class="modal-bg absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 ios-safe-area-bottom flex flex-col h-[90%]"><div class="flex justify-center mb-3"><div class="w-10 h-1.5 bg-gray-300 rounded-full"></div></div><div class="relative self-center bg-gray-200 dark:bg-gray-700 p-1 rounded-full flex space-x-1 mb-4"><div id="type-switcher-bg" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-0.25rem)] card rounded-full shadow-sm transition-transform duration-300 ease-in-out"></div><button id="type-expense" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-primary z-10">支出</button><button id="type-income" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-secondary z-10">收入</button></div><div class="text-center my-4"><span id="amount-display" class="text-5xl font-bold text-color-primary">¥0.00</span></div><div class="mb-4"><p class="text-sm font-semibold text-color-secondary px-2 mb-2">选择分类</p><div id="category-list" class="flex space-x-4 overflow-x-auto pb-3 px-2"></div></div><div class="grid grid-cols-4 gap-2 text-2xl font-medium text-center flex-1"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">1</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">2</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">3</button><input type="text" id="remark-input" placeholder="添加备注..." class="tap-effect card text-color-primary rounded-xl text-sm text-center placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">4</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">5</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">6</button><button class="keypad-btn tap-effect card rounded-xl flex justify-center items-center text-blue-600 font-bold">今天</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">7</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">8</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">9</button><button id="save-btn" rowspan="2" class="keypad-btn tap-effect bg-blue-600 text-white rounded-xl flex justify-center items-center row-span-2 text-lg font-bold">完成</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">.</button><button class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center">0</button><button id="backspace-btn" class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center"><i class="fas fa-backspace text-color-secondary"></i></button></div></div></div>
+        <div id="add-transaction-modal" class="add-transaction-modal absolute inset-0 z-30">
+            <div id="modal-backdrop" class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+            <div id="modal-content" class="modal-bg absolute bottom-0 left-0 right-0 rounded-t-3xl p-4 ios-safe-area-bottom flex flex-col h-[92dvh]">
+                <div class="flex justify-center mb-3"><div class="w-10 h-1.5 bg-gray-300 rounded-full"></div></div>
+                <div class="relative self-center bg-gray-200 dark:bg-gray-700 p-1 rounded-full flex space-x-1 mb-4">
+                    <div id="type-switcher-bg" class="absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-0.25rem)] card rounded-full shadow-sm transition-transform duration-300 ease-in-out"></div>
+                    <button id="type-expense" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-primary z-10">支出</button>
+                    <button id="type-income" class="type-switcher-btn relative px-6 py-1.5 text-sm font-semibold text-color-secondary z-10">收入</button>
+                </div>
+                <div class="text-center my-4"><span id="amount-display" class="text-5xl font-bold text-color-primary">¥0.00</span></div>
+                
+                <div class="mb-4 flex-1 flex flex-col overflow-hidden">
+                    <p class="text-sm font-semibold text-color-secondary px-2 mb-3 shrink-0">选择分类</p>
+                    <div id="category-list" class="grid grid-cols-3 gap-x-4 gap-y-6 p-2 overflow-y-auto">
+                        </div>
+                </div>
+
+                <div id="keypad-grid" class="grid grid-cols-4 gap-2 text-2xl font-medium text-center shrink-0">
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">1</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">2</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">3</button>
+                    <input type="text" id="remark-input" placeholder="添加备注..." class="keypad-btn tap-effect card text-color-primary rounded-xl text-sm text-center placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">4</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">5</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">6</button>
+                    <button id="today-btn" class="keypad-btn tap-effect card keypad-btn-gradient-bg rounded-xl flex justify-center items-center text-lg">今天</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">7</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">8</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">9</button>
+                    <button id="save-btn" class="keypad-btn tap-effect keypad-btn-gradient-bg rounded-xl flex justify-center items-center row-span-2 text-lg">完成</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">.</button>
+                    <button class="keypad-btn tap-effect card keypad-btn-gradient-text rounded-xl flex justify-center items-center">0</button>
+                    <button id="backspace-btn" class="keypad-btn tap-effect card text-color-primary rounded-xl flex justify-center items-center"><i class="fas fa-backspace text-color-secondary"></i></button>
+                </div>
+            </div>
+        </div>
         
         <div id="confirm-modal-container" class="confirm-modal-container absolute inset-0 z-40"><div class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8"><div class="card rounded-2xl p-6 w-full max-w-sm text-center"><h2 id="confirm-title" class="text-lg font-bold text-color-primary mb-2"></h2><p id="confirm-message" class="text-sm text-color-secondary mb-6"></p><div class="flex space-x-4"><button id="confirm-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 text-color-primary font-bold py-3 rounded-lg tap-effect">取消</button><button id="confirm-ok-btn" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-lg tap-effect">确认</button></div></div></div></div>
-
         <div id="input-modal-container" class="input-modal-container absolute inset-0 z-40"><div class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-8"><div class="card rounded-2xl p-6 w-full max-w-sm"><h2 id="input-title" class="text-lg font-bold text-color-primary mb-4"></h2><div id="input-fields"></div><div class="flex space-x-4 mt-6"><button id="input-cancel-btn" class="flex-1 bg-gray-200 dark:bg-gray-600 text-color-primary font-bold py-3 rounded-lg tap-effect">取消</button><button id="input-ok-btn" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg tap-effect">保存</button></div></div></div></div>
-
         <div id="custom-alert" class="absolute inset-x-0 top-0 flex justify-center items-start pt-16 z-50 pointer-events-none opacity-0 transition-opacity duration-300"><div class="bg-black/70 text-white text-sm font-semibold px-6 py-3 rounded-full shadow-lg"><p id="alert-message"></p></div></div>
     </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(registration => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            }, function(err) {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-    }
-    
-    const APP_STORAGE_KEY = 'moneyer_app_data';
-    const genId = () => Math.random().toString(36).substring(2, 10);
-    let appState;
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    (() => {
+        const APP_STORAGE_KEY = 'moneyer_app_data';
+        const genId = () => Math.random().toString(36).substring(2, 10);
+        let appState;
+        let analyticsPeriodType = 'month';
+        let analyticsTargetDate = new Date();
 
-    const defaultState = {
-        transactions: [],
-        expenseCategories: [
-            { name: '餐饮', icon: 'fas fa-utensils', color: '#F97316', bgColor: 'bg-orange-100', textColor: 'text-orange-500' },
-            { name: '购物', icon: 'fas fa-shopping-cart', color: '#EC4899', bgColor: 'bg-pink-100', textColor: 'text-pink-500' },
-            { name: '交通', icon: 'fas fa-bus', color: '#14B8A6', bgColor: 'bg-teal-100', textColor: 'text-teal-600' },
-            { name: '医药', icon: 'fas fa-pills', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
-            { name: '居住', icon: 'fas fa-home', color: '#0EA5E9', bgColor: 'bg-sky-100', textColor: 'text-sky-500' },
-            { name: '娱乐', icon: 'fas fa-film', color: '#8B5CF6', bgColor: 'bg-violet-100', textColor: 'text-violet-500' },
-            { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
-        ],
-        incomeCategories: [
-            { name: '工资', icon: 'fas fa-briefcase', color: '#22C55E', bgColor: 'bg-green-100', textColor: 'text-green-500' },
-            { name: '理财', icon: 'fas fa-chart-line', color: '#3B82F6', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
-            { name: '红包', icon: 'fas fa-gift', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
-            { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
-        ],
-        monthlyBudget: 3000,
-        categoryBudgets: {},
-        piggyBank: { goalName: '我的小金库', goalAmount: 1000, savedAmount: 0 }
-    };
-
-    function saveState() {
-        localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState));
-    }
-
-    function loadState() {
-        const savedData = localStorage.getItem(APP_STORAGE_KEY);
-        if (savedData) {
-            appState = JSON.parse(savedData);
-        } else {
-            appState = JSON.parse(JSON.stringify(defaultState)); 
-        }
-    }
-
-    const modal = document.getElementById('add-transaction-modal');
-    const customAlert = document.getElementById('custom-alert');
-    const alertMessage = document.getElementById('alert-message');
-    let alertTimeout;
-    let expenseChartInstance;
-    
-    function showAlert(message) {
-        if(alertMessage) alertMessage.textContent = message;
-        if(customAlert) {
-            customAlert.classList.remove('opacity-0');
-            clearTimeout(alertTimeout);
-            alertTimeout = window.setTimeout(() => {
-                customAlert.classList.add('opacity-0');
-            }, 2000);
-        }
-    }
-    
-    function getCategoryInfo(categoryName, type) {
-        const source = type === 'expense' ? appState.expenseCategories : appState.incomeCategories;
-        return source.find(c => c.name === categoryName) || appState.expenseCategories.find(c => c.name === '其他') || { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' };
-    }
-
-    function showScreen(screenId) {
-        document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-        document.getElementById(screenId)?.classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('text-blue-600', 'font-semibold');
-            item.classList.add('text-color-secondary');
-        });
-        const activeNavItem = document.getElementById(`nav-${screenId.split('-')[1]}`);
-        if(activeNavItem){
-            activeNavItem.classList.add('text-blue-600', 'font-semibold');
-            activeNavItem.classList.remove('text-color-secondary');
-        }
-
-        const screenRenderMap = {
-            'screen-list': renderTransactionList,
-            'screen-analytics': renderAnalyticsPage,
-            'screen-home': renderHomePage,
-            'screen-category-management': renderCategoryManagementPage,
-            'screen-budget': renderBudgetPage,
-            'screen-piggy-bank': renderPiggyBankPage,
+        const defaultState = {
+            transactions: [],
+            expenseCategories: [
+                { name: '餐饮', icon: 'fas fa-utensils', color: '#F97316', bgColor: 'bg-orange-100', textColor: 'text-orange-500' },
+                { name: '购物', icon: 'fas fa-shopping-cart', color: '#EC4899', bgColor: 'bg-pink-100', textColor: 'text-pink-500' },
+                { name: '交通', icon: 'fas fa-bus', color: '#14B8A6', bgColor: 'bg-teal-100', textColor: 'text-teal-600' },
+                { name: '医药', icon: 'fas fa-pills', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
+                { name: '娱乐', icon: 'fas fa-film', color: '#8B5CF6', bgColor: 'bg-violet-100', textColor: 'text-violet-500' },
+                { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
+            ],
+            incomeCategories: [
+                { name: '工资', icon: 'fas fa-briefcase', color: '#22C55E', bgColor: 'bg-green-100', textColor: 'text-green-500' },
+                { name: '理财', icon: 'fas fa-chart-line', color: '#3B82F6', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
+                { name: '红包', icon: 'fas fa-gift', color: '#EF4444', bgColor: 'bg-red-100', textColor: 'text-red-500' },
+                { name: '其他', icon: 'fas fa-ellipsis-h', color: '#6B7280', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
+            ],
+            monthlyBudget: 3000,
+            categoryBudgets: {},
+            piggyBank: { goalName: '我的小金库', goalAmount: 1000, savedAmount: 0 }
         };
-        screenRenderMap[screenId]?.();
-    }
-    
-    function renderAll() {
-        renderHomePage();
-        renderTransactionList();
-        renderPiggyBankPage(); 
-    }
-    
-    function calculateTotals(period) {
-        const now = new Date();
-        return appState.transactions.reduce((acc, t) => {
-            const tDate = new Date(t.date);
-            let shouldInclude = false;
-            if (period === 'month' && tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) {
-                shouldInclude = true;
-            } else if (period === 'year' && tDate.getFullYear() === now.getFullYear()) {
-                shouldInclude = true;
-            }
-            if (shouldInclude) {
-                if(t.category !== '存钱') { 
-                    acc[t.type] += t.amount;
+
+        function saveState() {
+            try { localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appState)); } 
+            catch (e) { console.error("Failed to save state", e); showAlert("无法保存数据"); }
+        }
+
+        function loadState() {
+            let needsSave = false;
+            try {
+                const savedData = localStorage.getItem(APP_STORAGE_KEY);
+                appState = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(defaultState));
+                const housingCategoryIndex = appState.expenseCategories.findIndex(c => c.name === '居住');
+                if (housingCategoryIndex > -1) {
+                    appState.expenseCategories.splice(housingCategoryIndex, 1);
+                    needsSave = true;
                 }
-            }
-            return acc;
-        }, { income: 0, expense: 0 });
-    }
-
-    function renderHomePage() {
-        const totals = calculateTotals('month');
-        document.getElementById('home-expense-display').textContent = `¥${totals.expense.toFixed(2)}`;
-
-        const homeBudgetBar = document.getElementById('home-budget-bar');
-        document.getElementById('home-budget-text').textContent = `¥${totals.expense.toFixed(2)} / ¥${appState.monthlyBudget.toFixed(2)}`;
-        const expenseRatio = appState.monthlyBudget > 0 ? (totals.expense / appState.monthlyBudget) * 100 : 0;
-        homeBudgetBar.style.width = `${Math.min(expenseRatio, 100)}%`;
-        
-        if (expenseRatio > 100) {
-            homeBudgetBar.classList.replace('bg-white','bg-red-500');
-        } else {
-            homeBudgetBar.classList.replace('bg-red-500', 'bg-white');
-        }
-        
-        const homeList = document.getElementById('home-transaction-list');
-        homeList.innerHTML = '';
-        if (appState.transactions.length === 0) {
-             homeList.innerHTML = `<div class="text-center py-10 text-color-secondary"><i class="fas fa-receipt text-4xl mb-3"></i><p>还没有任何交易记录</p></div>`;
-             return;
-        }
-
-        appState.transactions.filter(t => t.category !== '存钱').slice(0, 5).forEach((t, index) => {
-            const info = getCategoryInfo(t.category, t.type);
-            const item = document.createElement('div');
-            item.className = 'card p-4 rounded-2xl flex items-center justify-between tap-effect animate-slide-up';
-            item.style.animationDelay = `${index * 100}ms`;
-            item.style.opacity = '0';
-            const amountClass = t.type === 'income' ? 'text-green-500' : 'font-bold text-color-primary';
-            const sign = t.type === 'income' ? '+' : '-';
-            
-            const tDate = new Date(t.date);
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-            let dateText;
-            if (tDate.toDateString() === today.toDateString()) dateText = '今天';
-            else if (tDate.toDateString() === yesterday.toDateString()) dateText = '昨天';
-            else dateText = tDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-
-            item.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${t.category}</p><p class="text-sm text-color-secondary">${dateText}</p></div></div><p class="font-semibold text-lg ${amountClass}">${sign}¥${t.amount.toFixed(2)}</p>`;
-            homeList.appendChild(item);
-        });
-    }
-
-    function renderTransactionList() {
-        const listMainContent = document.getElementById('list-main-content');
-        const totals = calculateTotals('month');
-        document.getElementById('list-total-income').textContent = `¥${totals.income.toFixed(2)}`;
-        document.getElementById('list-total-expense').textContent = `¥${totals.expense.toFixed(2)}`;
-
-        listMainContent.innerHTML = '';
-        if (appState.transactions.length === 0) {
-            listMainContent.innerHTML = `<div class="text-center py-20 text-color-secondary"><i class="fas fa-box-open text-5xl mb-4"></i><p>空空如也</p></div>`;
-            return;
-        }
-
-        const grouped = appState.transactions.reduce((acc, t) => {
-            const date = new Date(t.date);
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            let key;
-            if (date.toDateString() === today.toDateString()) key = '今天';
-            else if (date.toDateString() === yesterday.toDateString()) key = '昨天';
-            else key = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-            if (!acc[key]) acc[key] = { date: date, transactions: [] };
-            acc[key].transactions.push(t);
-            return acc;
-        }, {});
-        
-        Object.keys(grouped).sort((a, b) => grouped[b].date - grouped[a].date).forEach((dateGroup) => {
-            const groupWrapper = document.createElement('div');
-            groupWrapper.className = 'mb-4';
-            groupWrapper.innerHTML = `<h3 class="text-color-secondary font-bold mb-2">${dateGroup}</h3>`;
-            const listContainer = document.createElement('div');
-            listContainer.className = 'card p-2 space-y-1';
-            
-            grouped[dateGroup].transactions.forEach((t) => {
-                const info = getCategoryInfo(t.category, t.type);
-                const swipeWrapper = document.createElement('div');
-                swipeWrapper.className = 'swipe-wrapper';
-                swipeWrapper.innerHTML = `<div class="delete-action tap-effect"><i class="fas fa-trash-alt"></i></div><div class="swipe-content flex items-center justify-between p-3"><div class="flex items-center pointer-events-none"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${t.category}</p>${t.remark ? `<p class="text-sm text-color-secondary">${t.remark}</p>` : ''}</div></div><p class="font-semibold text-lg ${t.type === 'income' ? 'text-green-500' : 'text-color-primary'} pointer-events-none">${t.type === 'income' ? '+' : '-'}¥${t.amount.toFixed(2)}</p></div>`;
-                addSwipeToDelete(swipeWrapper, t.id);
-                listContainer.appendChild(swipeWrapper);
-            });
-            groupWrapper.appendChild(listContainer);
-            listMainContent.appendChild(groupWrapper);
-        });
-    }
-
-    function addSwipeToDelete(element, transactionId) {
-        let startX, currentX, isSwiping = false;
-        const swipeContent = element.querySelector('.swipe-content');
-        if(!swipeContent) return;
-        const deleteAction = element.querySelector('.delete-action');
-
-        function handleMove(e) { if (isSwiping) { currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const diffX = currentX - startX; if (diffX < 0 && diffX > -100) swipeContent.style.transform = `translateX(${diffX}px)`; } }
-        function handleEnd() { if (isSwiping) { isSwiping = false; const diffX = currentX - startX; if (diffX < -40) { element.classList.add('swiped'); } else { element.classList.remove('swiped'); } swipeContent.style.transform = ''; window.removeEventListener('mousemove', handleMove); window.removeEventListener('mouseup', handleEnd); window.removeEventListener('touchmove', handleMove); window.removeEventListener('touchend', handleEnd); } }
-        
-        swipeContent.addEventListener('mousedown', (e) => { isSwiping = true; startX = e.clientX; window.addEventListener('mousemove', handleMove); window.addEventListener('mouseup', handleEnd); });
-        swipeContent.addEventListener('touchstart', (e) => { isSwiping = true; startX = e.touches[0].clientX; window.addEventListener('touchmove', handleMove); window.addEventListener('touchend', handleEnd); });
-        
-        deleteAction?.addEventListener('click', () => { 
-            appState.transactions = appState.transactions.filter(t => t.id !== transactionId); 
-            saveState();
-            showAlert('删除成功!'); 
-            renderAll(); 
-        });
-    }
-
-    let currentAmount = '0';
-    let currentType = 'expense';
-
-    function openModal() { document.getElementById('add-transaction-modal')?.classList.add('active'); renderCategories(appState.expenseCategories); }
-    function closeModal() { document.getElementById('add-transaction-modal')?.classList.remove('active'); resetCalculator(); }
-    function resetCalculator() { currentAmount = '0'; document.getElementById('remark-input').value = ''; updateDisplay(); }
-    function updateDisplay() { document.getElementById('amount-display').textContent = `¥${currentAmount}`; }
-
-    function renderCategories(categories) { 
-        const categoryList = document.getElementById('category-list');
-        if(!categoryList) return;
-        categoryList.innerHTML = ''; 
-        categories.forEach((cat, index) => { 
-            const div = document.createElement('div'); 
-            div.className = 'category-icon text-center space-y-1 shrink-0 tap-effect'; 
-            div.style.setProperty('--category-color', cat.color); 
-            div.style.animationDelay = `${index * 50}ms`; 
-            if (index === 0) div.classList.add('selected'); 
-            div.innerHTML = `<div class="icon-bg w-14 h-14 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center"><i class="${cat.icon} text-2xl text-color-secondary transition-colors"></i></div><span class="text-xs text-color-secondary">${cat.name}</span>`; 
-            div.addEventListener('click', () => { 
-                categoryList.querySelector('.category-icon.selected')?.classList.remove('selected');
-                div.classList.add('selected');
-            }); 
-            categoryList.appendChild(div); 
-        }); 
-    }
-    
-    function renderAnalyticsPage(period = 'month') {
-        const Chart = window.Chart;
-        if (!Chart) return;
-        const ctx = document.getElementById('expenseChart')?.getContext('2d');
-        if (!ctx) return;
-
-        const totals = calculateTotals(period);
-        const expenseData = appState.expenseCategories.map(cat => {
-            return appState.transactions.filter(t => {
-                const tDate = new Date(t.date);
-                const now = new Date();
-                const periodCheck = period === 'month' ? (tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear()) : (tDate.getFullYear() === now.getFullYear());
-                return t.type === 'expense' && t.category === cat.name && periodCheck;
-            }).reduce((sum, t) => sum + t.amount, 0);
-        });
-
-        const totalExpense = totals.expense;
-        const hasData = expenseData.some(d => d > 0);
-        
-        const chartData = { 
-            labels: appState.expenseCategories.map(c => c.name), 
-            datasets: [{ 
-                data: hasData ? expenseData : [1], // Show a full grey circle if no data
-                backgroundColor: hasData ? appState.expenseCategories.map(c => c.color) : ['#E5E7EB'],
-                borderWidth: 0 
-            }] 
-        };
-        
-        if (expenseChartInstance) expenseChartInstance.destroy();
-        expenseChartInstance = new Chart(ctx, { type: 'doughnut', data: chartData, options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false }}, animation: { animateRotate: true, duration: 1000, easing: 'easeInOutCubic' }}});
-        
-        document.getElementById('chart-total').textContent = `¥${totalExpense.toFixed(2)}`;
-        const analyticsCategoryList = document.getElementById('analytics-category-list');
-        analyticsCategoryList.innerHTML = '<h2 class="text-lg font-bold text-color-primary mb-2">分类支出排行榜</h2>';
-        
-        if (!hasData) {
-            analyticsCategoryList.innerHTML += `<div class="text-center py-10 text-color-secondary"><i class="fas fa-chart-pie text-4xl mb-3"></i><p>暂无支出数据</p></div>`;
-            return;
-        }
-
-        let sortedCategories = appState.expenseCategories
-            .map((cat, index) => ({...cat, amount: expenseData[index], percentage: totalExpense > 0 ? (expenseData[index] / totalExpense) * 100 : 0}))
-            .filter(cat => cat.amount > 0)
-            .sort((a, b) => b.amount - a.amount);
-
-        sortedCategories.forEach(cat => {
-             const info = getCategoryInfo(cat.name, 'expense');
-             const item = document.createElement('div');
-             item.className = 'card p-4 rounded-2xl flex items-center justify-between';
-             item.innerHTML = `<div class="flex items-center"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${cat.name}</p></div></div><div class="text-right"><p class="font-bold text-lg text-color-primary">-¥${cat.amount.toFixed(2)}</p><p class="text-sm text-color-secondary">${cat.percentage.toFixed(1)}%</p></div>`;
-             analyticsCategoryList.appendChild(item);
-        });
-    }
-    
-    function applyTheme(isDark) { 
-        const appContainer = document.getElementById('app-container');
-        document.getElementById('theme-toggle').checked = isDark;
-        if(isDark) { 
-            appContainer.classList.add('dark'); 
-            document.documentElement.classList.add('dark');
-        } else { 
-            appContainer.classList.remove('dark'); 
-            document.documentElement.classList.remove('dark');
-        } 
-    }
-    
-    let confirmCallback = () => {};
-    function showConfirmModal(title, message, onConfirm) {
-        document.getElementById('confirm-title').textContent = title;
-        document.getElementById('confirm-message').textContent = message;
-        document.getElementById('confirm-modal-container')?.classList.add('active');
-        confirmCallback = onConfirm;
-    }
-
-    function renderCategoryManagementPage() {
-        const expenseList = document.getElementById('expense-category-manage-list');
-        const incomeList = document.getElementById('income-category-manage-list');
-        expenseList.innerHTML = '';
-        incomeList.innerHTML = '';
-        
-        [appState.expenseCategories, appState.incomeCategories].forEach((list, index) => {
-            const type = index === 0 ? 'expense' : 'income';
-            const targetEl = index === 0 ? expenseList : incomeList;
-            list.forEach(cat => {
-                const item = document.createElement('div');
-                item.className = 'card flex items-center justify-between p-3 rounded-lg';
-                item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${cat.bgColor} flex items-center justify-center mr-3"><i class="${cat.icon} ${cat.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><div class="flex items-center space-x-4"><i class="fas fa-trash-alt text-red-500 cursor-pointer tap-effect" data-name="${cat.name}" data-type="${type}"></i><i class="fas fa-bars text-color-secondary cursor-grab"></i></div>`;
-                targetEl.appendChild(item);
-            });
-        });
-    }
-
-    function renderBudgetPage() {
-        document.getElementById('monthly-budget-input').value = appState.monthlyBudget;
-        
-        const categoryBudgetList = document.getElementById('category-budget-list');
-        categoryBudgetList.innerHTML = '';
-        appState.expenseCategories.forEach(cat => {
-            if(cat.name === '其他') return;
-            const item = document.createElement('div');
-            item.className = 'card flex items-center justify-between p-3 rounded-lg';
-            const info = getCategoryInfo(cat.name, 'expense');
-            item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${info.bgColor} flex items-center justify-center mr-3"><i class="${info.icon} ${info.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><input type="number" data-category-name="${cat.name}" class="w-24 p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary text-right focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="未设置" value="${appState.categoryBudgets[cat.name] || ''}">`;
-            categoryBudgetList.appendChild(item);
-        });
-    }
-
-    function renderPiggyBankPage() {
-        const { piggyBank } = appState;
-        document.getElementById('piggy-goal-name-display').textContent = piggyBank.goalName;
-        document.getElementById('piggy-goal-amount-display').textContent = `¥${piggyBank.savedAmount.toFixed(2)} / ¥${piggyBank.goalAmount.toFixed(2)}`;
-        const progress = piggyBank.goalAmount > 0 ? (piggyBank.savedAmount / piggyBank.goalAmount) * 100 : 0;
-        document.getElementById('piggy-goal-progress').style.width = `${Math.min(progress, 100)}%`;
-        document.getElementById('piggy-bank-amount').textContent = `¥${piggyBank.savedAmount.toFixed(2)}`;
-        document.getElementById('piggy-bank-goal-name').textContent = piggyBank.goalName;
-        document.getElementById('piggy-bank-progress').style.width = `${Math.min(progress, 100)}%`;
-    }
-    
-    let inputCallback = () => {};
-    function showInputModal(title, fields, onConfirm) {
-        const inputModal = document.getElementById('input-modal-container');
-        const titleEl = document.getElementById('input-title');
-        const fieldsEl = document.getElementById('input-fields');
-        titleEl.textContent = title;
-        fieldsEl.innerHTML = '';
-        fields.forEach(field => {
-            fieldsEl.innerHTML += `<label for="${field.id}" class="block text-sm font-medium text-color-secondary mb-1">${field.label}</label><input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3">`;
-        });
-        inputModal.classList.add('active');
-        inputCallback = () => {
-            const values = {};
-            fields.forEach(field => {
-                values[field.id] = document.getElementById(field.id)?.value;
-            });
-            onConfirm(values);
-            inputModal.classList.remove('active');
-        };
-    }
-
-    document.getElementById('app-container').addEventListener('click', (e) => {
-        const target = e.target.closest('[id]');
-        if (!target) return;
-
-        switch(target.id) {
-            case 'nav-home': e.preventDefault(); showScreen('screen-home'); break;
-            case 'nav-list': e.preventDefault(); showScreen('screen-list'); break;
-            case 'nav-add': e.preventDefault(); openModal(); break;
-            case 'nav-analytics': e.preventDefault(); showScreen('screen-analytics'); break;
-            case 'nav-settings': e.preventDefault(); showScreen('screen-settings'); break;
-            
-            case 'budget-settings-btn': showScreen('screen-budget'); break;
-            case 'category-management-btn': showScreen('screen-category-management'); break;
-            case 'piggy-bank-card': showScreen('screen-piggy-bank'); break;
-
-            case 'back-to-settings-btn':
-            case 'back-to-settings-from-budget-btn':
-                showScreen('screen-settings');
-                break;
-            case 'back-to-home-from-piggy-btn':
-                showScreen('screen-home');
-                break;
-            
-            case 'clear-data-btn':
-                showConfirmModal( '确认清除', '此操作将永久删除所有交易记录，无法恢复。您确定要继续吗？', () => { 
-                    appState = JSON.parse(JSON.stringify(defaultState));
+                const initialTransactionCount = appState.transactions.length;
+                appState.transactions = appState.transactions.filter(t => t.category !== '居住');
+                if (appState.transactions.length < initialTransactionCount) {
+                    needsSave = true;
+                }
+                if (needsSave) {
                     saveState();
-                    renderAll(); 
-                    showAlert('所有数据已清除'); 
+                }
+            } catch (e) {
+                console.error("Failed to load state", e);
+                appState = JSON.parse(JSON.stringify(defaultState));
+            }
+        }
+
+        let expenseChartInstance;
+        
+        function showAlert(message) {
+            const customAlert = document.getElementById('custom-alert');
+            document.getElementById('alert-message').textContent = message;
+            customAlert.classList.remove('opacity-0');
+            setTimeout(() => customAlert.classList.add('opacity-0'), 2000);
+        }
+        
+        function getCategoryInfo(categoryName, type) {
+            if (categoryName === '存钱') return { name: '存钱', icon: 'fas fa-piggy-bank', color: '#EC4899', bgColor: 'bg-pink-100', textColor: 'text-pink-500' };
+            const source = type === 'expense' ? appState.expenseCategories : appState.incomeCategories;
+            return source.find(c => c.name === categoryName) || source.find(c => c.name === '其他');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId)?.classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const navId = screenId.startsWith('screen-') ? screenId.substring(7).replace('-history','') : screenId;
+                const isTarget = item.id === `nav-${navId}`;
+                item.classList.toggle('text-blue-600', isTarget);
+                item.classList.toggle('font-semibold', isTarget);
+                item.classList.toggle('text-color-secondary', !isTarget);
+            });
+
+            const screenRenderMap = {
+                'screen-home': renderHomePage,
+                'screen-transaction-history': () => renderTransactionList('full-transaction-list', appState.transactions),
+                'screen-analytics': renderAnalyticsPage,
+                'screen-category-management': renderCategoryManagementPage,
+                'screen-budget': renderBudgetPage,
+                'screen-piggy-bank': renderPiggyBankPage,
+            };
+            screenRenderMap[screenId]?.();
+        }
+        
+        function renderAll() {
+            renderHomePage();
+            if (document.getElementById('screen-transaction-history').classList.contains('active')) {
+                renderTransactionList('full-transaction-list', appState.transactions);
+            }
+            if (document.getElementById('screen-analytics').classList.contains('active')) {
+                renderAnalyticsPage();
+            }
+            renderPiggyBankPage(); 
+        }
+        
+        function calculateTotals(periodType, targetDate) {
+            return appState.transactions.reduce((acc, t) => {
+                const tDate = new Date(t.date);
+                let periodCheck = false;
+                if (periodType === 'month') {
+                    periodCheck = tDate.getMonth() === targetDate.getMonth() && tDate.getFullYear() === targetDate.getFullYear();
+                } else if (periodType === 'year') {
+                    periodCheck = tDate.getFullYear() === targetDate.getFullYear();
+                }
+                if (periodCheck) {
+                    if (t.category === '存钱') {
+                        acc.savings += t.amount;
+                    } else {
+                        acc[t.type] = (acc[t.type] || 0) + t.amount;
+                    }
+                }
+                return acc;
+            }, { income: 0, expense: 0, savings: 0 });
+        }
+
+        function renderHomePage() {
+            const totals = calculateTotals('month', new Date());
+            document.getElementById('home-expense-display').textContent = `¥${totals.expense.toFixed(2)}`;
+            document.getElementById('home-budget-text').textContent = `¥${totals.expense.toFixed(2)} / ¥${appState.monthlyBudget.toFixed(2)}`;
+            const homeBudgetBar = document.getElementById('home-budget-bar');
+            const expenseRatio = appState.monthlyBudget > 0 ? (totals.expense / appState.monthlyBudget) * 100 : 0;
+            homeBudgetBar.style.width = `${Math.min(expenseRatio, 100)}%`;
+            homeBudgetBar.classList.toggle('bg-red-500', expenseRatio > 100);
+            homeBudgetBar.classList.toggle('bg-white', expenseRatio <= 100);
+            renderTransactionList('home-transaction-list', appState.transactions);
+        }
+
+        function renderTransactionList(listId, transactions) {
+            const listEl = document.getElementById(listId);
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            const transactionsToDisplay = listId === 'home-transaction-list' ? transactions.slice(0, 5) : transactions;
+            if (listId === 'full-transaction-list') {
+                const totals = calculateTotals('month', new Date());
+                document.getElementById('list-total-income').textContent = `¥${totals.income.toFixed(2)}`;
+                document.getElementById('list-total-expense').textContent = `¥${totals.expense.toFixed(2)}`;
+            }
+            if (transactionsToDisplay.length === 0) {
+                const message = listId === 'home-transaction-list' ? '还没有任何交易记录' : '空空如也';
+                const icon = listId === 'home-transaction-list' ? 'fa-receipt' : 'fa-box-open';
+                listEl.innerHTML = `<div class="text-center py-10 text-color-secondary"><i class="fas ${icon} text-4xl mb-3"></i><p>${message}</p></div>`;
+                return;
+            }
+            const parentElement = document.createDocumentFragment();
+            const grouped = transactionsToDisplay.reduce((acc, t) => {
+                const tDate = new Date(t.date);
+                const key = new Date(tDate.getFullYear(), tDate.getMonth(), tDate.getDate()).toISOString();
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(t);
+                return acc;
+            }, {});
+            Object.keys(grouped).sort().reverse().forEach((dateKey) => {
+                const date = new Date(dateKey);
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(today.getDate() - 1);
+                let dateText = (date.toDateString() === today.toDateString()) ? '今天' : (date.toDateString() === yesterday.toDateString()) ? '昨天' : date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+                const groupWrapper = document.createElement('div');
+                groupWrapper.className = 'mb-4';
+                groupWrapper.innerHTML = `<h3 class="text-color-secondary font-bold mb-2">${dateText}</h3>`;
+                const listContainer = document.createElement('div');
+                listContainer.className = 'card p-2 space-y-1';
+                grouped[dateKey].forEach((t) => {
+                    const info = getCategoryInfo(t.category, t.type);
+                    const itemWrapper = document.createElement('div');
+                    itemWrapper.className = 'swipe-wrapper';
+                    itemWrapper.innerHTML = `<div class="swipe-actions"><button class="swipe-action-btn action-cancel">取消</button><button class="swipe-action-btn action-delete">删除</button></div><div class="swipe-content p-3 flex items-center justify-between"><div class="flex items-center pointer-events-none"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div><p class="font-semibold text-color-primary">${t.category}</p>${t.remark ? `<p class="text-sm text-color-secondary">${t.remark}</p>` : ''}</div></div><p class="font-semibold text-lg ${t.type === 'income' ? 'text-green-500' : 'text-color-primary'} pointer-events-none">${t.type === 'income' ? '+' : (t.category === '存钱' ? '' : '-')}¥${t.amount.toFixed(2)}</p></div>`;
+                    addSwipeToDelete(itemWrapper, t.id);
+                    listContainer.appendChild(itemWrapper);
+                });
+                groupWrapper.appendChild(listContainer);
+                parentElement.appendChild(groupWrapper);
+            });
+            listEl.appendChild(parentElement);
+        }
+
+        function addSwipeToDelete(element, transactionId) {
+            let startX, currentX, isSwiping = false;
+            const swipeContent = element.querySelector('.swipe-content');
+            if(!swipeContent) return;
+            const handleStart = (e) => { document.querySelectorAll('.swipe-wrapper.swiped').forEach(el => el !== element && el.classList.remove('swiped')); isSwiping = true; startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; };
+            const handleMove = (e) => { if (!isSwiping) return; currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const diffX = currentX - startX; if (diffX < 0 && diffX > -180) swipeContent.style.transform = `translateX(${diffX}px)`; };
+            const handleEnd = () => { if (!isSwiping) return; isSwiping = false; const diffX = currentX - startX; element.classList.toggle('swiped', diffX < -60); swipeContent.style.transform = ''; };
+            swipeContent.addEventListener('mousedown', handleStart); swipeContent.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd); window.addEventListener('mouseleave', handleEnd);
+            swipeContent.addEventListener('touchstart', handleStart, {passive: true});
+            swipeContent.addEventListener('touchmove', handleMove, {passive: true});
+            swipeContent.addEventListener('touchend', handleEnd);
+            element.querySelector('.action-cancel')?.addEventListener('click', () => element.classList.remove('swiped'));
+            element.querySelector('.action-delete')?.addEventListener('click', () => { 
+                showConfirmModal('确认删除', '您确定要删除这条交易记录吗？此操作无法撤销。', () => {
+                    appState.transactions = appState.transactions.filter(t => t.id !== transactionId); 
+                    saveState(); showAlert('删除成功!'); renderAll();
                     document.getElementById('confirm-modal-container')?.classList.remove('active');
                 });
-                break;
-            case 'deposit-to-piggy-btn':
-                showInputModal( '存一笔钱', [{id: 'deposit-amount', label: '存入金额', type: 'number', placeholder: '例如: 100'}],
-                    (values) => {
-                        const amount = parseFloat(values['deposit-amount']);
-                        if (!isNaN(amount) && amount > 0) {
-                            appState.piggyBank.savedAmount += amount;
-                            appState.transactions.unshift({ id: genId(), type: 'expense', category: '存钱', amount: amount, remark: `存入${appState.piggyBank.goalName}`, date: new Date().toISOString().split('T')[0] });
-                            saveState();
-                            renderAll();
-                            showAlert(`成功存入 ¥${amount.toFixed(2)}`);
-                        } else {
-                            showAlert('请输入有效的金额');
-                        }
-                    }
-                );
-                break;
-            case 'set-piggy-goal-btn':
-                showInputModal( '设置新目标', [{id: 'goal-name', label: '目标名称', type: 'text', placeholder: '例如: 买新手机'}, {id: 'goal-amount', label: '目标金额', type: 'number', placeholder: '例如: 6999'}],
-                    (values) => {
-                        const name = values['goal-name'];
-                        const amount = parseFloat(values['goal-amount']);
-                        if (name && !isNaN(amount) && amount > 0) {
-                            appState.piggyBank.goalName = name;
-                            appState.piggyBank.goalAmount = amount;
-                            appState.piggyBank.savedAmount = 0; 
-                            saveState();
-                            renderPiggyBankPage();
-                            showAlert('新目标已设置！');
-                        } else {
-                            showAlert('请输入有效的目标名称和金额');
-                        }
-                    }
-                );
-                break;
-            
-             case 'save-btn':
-                if (parseFloat(currentAmount) === 0) { showAlert('金额不能为0'); return; } 
-                const selectedCategoryEl = document.querySelector('.category-icon.selected'); 
-                if (!selectedCategoryEl) { showAlert('请选择一个分类'); return; }
-                const categoryName = selectedCategoryEl.querySelector('span')?.textContent || ''; 
-                appState.transactions.unshift({ id: genId(), type: currentType, category: categoryName, amount: parseFloat(currentAmount), remark: document.getElementById('remark-input').value, date: new Date().toISOString().split('T')[0] }); 
-                saveState();
-                closeModal(); 
-                showAlert('保存成功!'); 
-                renderAll(); 
-                showScreen('screen-list'); 
-                break;
-            case 'backspace-btn':
-                currentAmount = currentAmount.length > 1 ? currentAmount.slice(0, -1) : '0';
-                updateDisplay();
-                break;
-            
-            case 'confirm-ok-btn': if(confirmCallback) confirmCallback(); break;
-            case 'confirm-cancel-btn': document.getElementById('confirm-modal-container')?.classList.remove('active'); break;
-            case 'input-ok-btn': if(inputCallback) inputCallback(); break;
-            case 'input-cancel-btn': document.getElementById('input-modal-container')?.classList.remove('active'); break;
-
-            case 'monthly-btn':
-            case 'yearly-btn':
-                const isMonthly = target.id === 'monthly-btn';
-                document.getElementById('monthly-btn').classList.toggle('active', isMonthly);
-                document.getElementById('monthly-btn').classList.toggle('bg-blue-600', isMonthly);
-                document.getElementById('monthly-btn').classList.toggle('text-white', isMonthly);
-                document.getElementById('monthly-btn').classList.toggle('text-color-secondary', !isMonthly);
-                document.getElementById('yearly-btn').classList.toggle('active', !isMonthly);
-                document.getElementById('yearly-btn').classList.toggle('bg-blue-600', !isMonthly);
-                document.getElementById('yearly-btn').classList.toggle('text-white', !isMonthly);
-                document.getElementById('yearly-btn').classList.toggle('text-color-secondary', isMonthly);
-                document.querySelector('#chart-center-text p').textContent = isMonthly ? '本月总支出' : '本年总支出';
-                renderAnalyticsPage(isMonthly ? 'month' : 'year');
-                break;
-        }
-
-        const deleteCatBtn = target.closest('.fa-trash-alt[data-name]');
-        if(deleteCatBtn) {
-            const categoryName = deleteCatBtn.dataset.name;
-            if (categoryName === '其他') { showAlert('“其他”分类无法删除'); return; }
-            showConfirmModal( '删除分类', `确定要删除“${categoryName}”分类吗？`, () => {
-                const categoryType = deleteCatBtn.dataset.type;
-                appState.transactions.forEach(t => { if (t.category === categoryName && t.type === categoryType) { t.category = '其他'; } });
-                if (categoryType === 'expense') { appState.expenseCategories = appState.expenseCategories.filter(c => c.name !== categoryName); } else { appState.incomeCategories = appState.incomeCategories.filter(c => c.name !== categoryName); }
-                saveState();
-                renderCategoryManagementPage(); renderAll(); showAlert(`分类“${categoryName}”已删除`);
-                document.getElementById('confirm-modal-container')?.classList.remove('active');
             });
         }
-    });
 
-    document.getElementById('theme-toggle')?.addEventListener('change', (e) => {
-        applyTheme(e.target.checked);
-        localStorage.setItem('moneyer-theme', e.target.checked ? 'dark' : 'light');
-    });
-    
-    document.getElementById('modal-content')?.addEventListener('click', (e) => {
-        const target = e.target.closest('.keypad-btn');
-        if (!target || target.id) return;
-        const key = target.textContent?.trim() || '';
-        if (!isNaN(parseFloat(key))) {
-            if (currentAmount === '0') currentAmount = key;
-            else if (currentAmount.length < 9) currentAmount += key;
-        } else if (key === '.' && !currentAmount.includes('.')) {
-            currentAmount += '.';
+        let currentAmount = '0';
+        let currentType = 'expense';
+        const openModal = () => {
+            document.getElementById('add-transaction-modal')?.classList.add('active');
+            // Ensure the default view is expense with 3 columns
+            const categoryListEl = document.getElementById('category-list');
+            categoryListEl.classList.remove('grid-cols-2', 'px-8');
+            categoryListEl.classList.add('grid-cols-3');
+            renderCategories(appState.expenseCategories);
+        };
+        const closeModal = () => { document.getElementById('add-transaction-modal')?.classList.remove('active'); resetCalculator(); };
+        const resetCalculator = () => { currentAmount = '0'; document.getElementById('remark-input').value = ''; updateDisplay(); };
+        const updateDisplay = () => { document.getElementById('amount-display').textContent = `¥${currentAmount}`; };
+
+        function renderCategories(categories) { 
+            const categoryList = document.getElementById('category-list');
+            if (!categoryList) return;
+            categoryList.innerHTML = ''; 
+            categories.forEach((cat, index) => { 
+                const div = document.createElement('div'); 
+                div.className = 'category-item text-center space-y-2 shrink-0'; 
+                div.style.setProperty('--category-color', cat.color); 
+                if (index === 0) div.classList.add('selected'); 
+                div.innerHTML = `<div class="icon-bg w-16 h-16 rounded-2xl bg-black/5 dark:bg-white/10 flex items-center justify-center"><i class="${cat.icon} text-3xl text-color-secondary transition-colors"></i></div><span class="text-xs font-medium text-color-secondary">${cat.name}</span>`; 
+                div.addEventListener('click', () => { 
+                    const currentlySelected = categoryList.querySelector('.category-item.selected');
+                    if (currentlySelected) currentlySelected.classList.remove('selected');
+                    div.classList.add('selected');
+                }); 
+                categoryList.appendChild(div); 
+            }); 
         }
-        updateDisplay();
-    });
-
-    document.getElementById('type-expense').addEventListener('click', () => {
-        currentType = 'expense';
-        document.getElementById('type-switcher-bg').style.transform = 'translateX(0)';
-        document.getElementById('type-expense').classList.replace('text-color-secondary', 'text-color-primary');
-        document.getElementById('type-income').classList.replace('text-color-primary', 'text-color-secondary');
-        renderCategories(appState.expenseCategories);
-    });
-    document.getElementById('type-income').addEventListener('click', () => {
-        currentType = 'income';
-        document.getElementById('type-switcher-bg').style.transform = 'translateX(calc(100% + 0.25rem))';
-        document.getElementById('type-income').classList.replace('text-color-secondary', 'text-color-primary');
-        document.getElementById('type-expense').classList.replace('text-color-primary', 'text-color-secondary');
-        renderCategories(appState.incomeCategories);
-    });
-
-    document.getElementById('screen-budget').addEventListener('change', (e) => {
-        const target = e.target;
-        if(target.id === 'monthly-budget-input') {
-            const value = parseFloat(target.value);
-            if (!isNaN(value) && value >= 0) { appState.monthlyBudget = value; saveState(); renderHomePage(); }
-        } else if (target.dataset.categoryName) {
-            const value = parseFloat(target.value);
-            const catName = target.dataset.categoryName;
-            if (!isNaN(value) && value >= 0) { appState.categoryBudgets[catName] = value; } else { delete appState.categoryBudgets[catName]; }
-            saveState();
+        
+        function renderAnalyticsPage() {
+            if (typeof Chart === 'undefined') { setTimeout(renderAnalyticsPage, 100); return; }
+            const ctx = document.getElementById('expenseChart')?.getContext('2d');
+            if (!ctx) return;
+            document.getElementById('current-period-display').textContent = analyticsPeriodType === 'month' ? `${analyticsTargetDate.getFullYear()}年 ${analyticsTargetDate.getMonth() + 1}月` : `${analyticsTargetDate.getFullYear()}年`;
+            const totals = calculateTotals(analyticsPeriodType, analyticsTargetDate);
+            document.getElementById('summary-income').textContent = `¥${totals.income.toFixed(2)}`;
+            document.getElementById('summary-expense').textContent = `¥${totals.expense.toFixed(2)}`;
+            const balance = totals.income - totals.expense;
+            const balanceEl = document.getElementById('summary-balance');
+            balanceEl.textContent = `¥${balance.toFixed(2)}`;
+            balanceEl.classList.toggle('text-green-500', balance > 0);
+            balanceEl.classList.toggle('text-red-500', balance < 0);
+            balanceEl.classList.toggle('text-color-primary', balance === 0);
+            const allExpenseTypes = [...appState.expenseCategories, { name: '存钱', icon: 'fas fa-piggy-bank', color: '#EC4899', bgColor: 'bg-pink-100', textColor: 'text-pink-500' }];
+            const periodData = allExpenseTypes.map(cat => {
+                return appState.transactions.filter(t => {
+                    const tDate = new Date(t.date);
+                    const periodCheck = analyticsPeriodType === 'month' ? (tDate.getMonth() === analyticsTargetDate.getMonth() && tDate.getFullYear() === analyticsTargetDate.getFullYear()) : (tDate.getFullYear() === analyticsTargetDate.getFullYear());
+                    return t.category === cat.name && (t.type === 'expense' || t.category === '存钱') && periodCheck;
+                }).reduce((sum, t) => sum + t.amount, 0);
+            });
+            const totalDisplayExpense = periodData.reduce((a, b) => a + b, 0);
+            const hasData = totalDisplayExpense > 0;
+            const chartData = { labels: allExpenseTypes.map(c => c.name), datasets: [{ data: hasData ? periodData : [1], backgroundColor: hasData ? allExpenseTypes.map(c => c.color) : ['#E5E7EB'], borderWidth: 0 }] };
+            if (expenseChartInstance) expenseChartInstance.destroy();
+            expenseChartInstance = new Chart(ctx, { type: 'doughnut', data: chartData, options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false }}, animation: { animateRotate: true, duration: 1000, easing: 'easeInOutCubic' }}});
+            document.getElementById('chart-total').textContent = `¥${totalDisplayExpense.toFixed(2)}`;
+            document.querySelector('#chart-center-text p').textContent = '期间总支出';
+            const analyticsCategoryList = document.getElementById('analytics-category-list');
+            analyticsCategoryList.innerHTML = '<h2 class="text-lg font-bold text-color-primary mb-2">分类支出排行榜</h2>';
+            if (!hasData) {
+                analyticsCategoryList.innerHTML += `<div class="text-center py-10 text-color-secondary"><i class="fas fa-chart-pie text-4xl mb-3"></i><p>该期间无支出数据</p></div>`;
+                return;
+            }
+            const sortedCategories = allExpenseTypes.map((cat, index) => ({...cat, amount: periodData[index], percentage: totalDisplayExpense > 0 ? (periodData[index] / totalDisplayExpense) * 100 : 0})).filter(cat => cat.amount > 0).sort((a, b) => b.amount - a.amount);
+            sortedCategories.forEach(cat => {
+                const info = getCategoryInfo(cat.name, 'expense');
+                const item = document.createElement('div');
+                item.className = 'card p-4 rounded-2xl flex items-center justify-between';
+                item.innerHTML = `<div class="flex items-center flex-1"><div class="w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center mr-4"><i class="${info.icon} ${info.textColor}"></i></div><div class="flex-1"><p class="font-semibold text-color-primary">${cat.name}</p><div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mt-1"><div class="h-1.5 rounded-full" style="width: ${cat.percentage.toFixed(2)}%; background-color: ${info.color};"></div></div></div></div><div class="text-right ml-4 w-24 flex-shrink-0"><p class="font-bold text-lg text-color-primary">-¥${cat.amount.toFixed(2)}</p><p class="text-sm text-color-secondary">${cat.percentage.toFixed(1)}%</p></div>`;
+                analyticsCategoryList.appendChild(item);
+            });
         }
-    });
-    
-    // --- Initial Load ---
-    loadState();
-    applyTheme(localStorage.getItem('moneyer-theme') === 'dark');
-    showScreen('screen-home');
-    renderAll();
-});
-</script>
+        
+        function applyTheme(isDark) { 
+            const themeColor = isDark ? getComputedStyle(document.documentElement).getPropertyValue('--theme-color-dark').trim() : getComputedStyle(document.documentElement).getPropertyValue('--theme-color-light').trim();
+            document.getElementById('theme-color-meta').setAttribute('content', themeColor);
+            document.documentElement.classList.toggle('dark', isDark);
+            document.getElementById('theme-toggle').checked = isDark;
+        }
+        
+        let confirmCallback = () => {};
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            document.getElementById('confirm-modal-container')?.classList.add('active');
+            confirmCallback = onConfirm;
+        }
 
+        function renderCategoryManagementPage() {
+            const expenseList = document.getElementById('expense-category-manage-list');
+            const incomeList = document.getElementById('income-category-manage-list');
+            [expenseList, incomeList].forEach(el => el.innerHTML = '');
+            [appState.expenseCategories, appState.incomeCategories].forEach((list, index) => {
+                const type = index === 0 ? 'expense' : 'income';
+                const targetEl = index === 0 ? expenseList : incomeList;
+                list.forEach(cat => {
+                    const item = document.createElement('div');
+                    item.className = 'card flex items-center justify-between p-3 rounded-lg';
+                    item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${cat.bgColor} flex items-center justify-center mr-3"><i class="${cat.icon} ${cat.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><div class="flex items-center space-x-4"><i class="fas fa-trash-alt text-red-500 cursor-pointer tap-effect" data-name="${cat.name}" data-type="${type}"></i><i class="fas fa-bars text-color-secondary cursor-grab"></i></div>`;
+                    targetEl.appendChild(item);
+                });
+            });
+        }
+
+        function renderBudgetPage() {
+            document.getElementById('monthly-budget-input').value = appState.monthlyBudget;
+            const categoryBudgetList = document.getElementById('category-budget-list');
+            categoryBudgetList.innerHTML = '';
+            appState.expenseCategories.forEach(cat => {
+                if(cat.name === '其他') return;
+                const item = document.createElement('div');
+                item.className = 'card flex items-center justify-between p-3 rounded-lg';
+                const info = getCategoryInfo(cat.name, 'expense');
+                item.innerHTML = `<div class="flex items-center"><div class="w-8 h-8 rounded-lg ${info.bgColor} flex items-center justify-center mr-3"><i class="${info.icon} ${info.textColor}"></i></div><span class="text-color-primary font-medium">${cat.name}</span></div><input type="number" data-category-name="${cat.name}" class="w-24 p-2 rounded-lg text-color-primary text-right focus:outline-none" placeholder="未设置" value="${appState.categoryBudgets[cat.name] || ''}">`;
+                categoryBudgetList.appendChild(item);
+            });
+        }
+
+        function renderPiggyBankPage() {
+            const { piggyBank } = appState;
+            const progress = piggyBank.goalAmount > 0 ? (piggyBank.savedAmount / piggyBank.goalAmount) * 100 : 0;
+            const progressPercent = Math.floor(progress);
+            document.getElementById('piggy-goal-name-display').textContent = piggyBank.goalName;
+            document.getElementById('piggy-goal-amount-display').textContent = `¥${piggyBank.savedAmount.toFixed(2)} / ¥${piggyBank.goalAmount.toFixed(2)}`;
+            document.getElementById('piggy-goal-progress').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('piggy-goal-percentage').textContent = `${progressPercent}%`;
+            document.getElementById('piggy-bank-amount').textContent = `¥${piggyBank.savedAmount.toFixed(2)}`;
+            document.getElementById('piggy-bank-goal-name').textContent = piggyBank.goalName;
+            document.getElementById('piggy-bank-progress').style.width = `${Math.min(progress, 100)}%`;
+            document.getElementById('piggy-bank-percentage').textContent = `${progressPercent}%`;
+        }
+        
+        let inputCallback = () => {};
+        function showInputModal(title, fields, onConfirm) {
+            const inputModal = document.getElementById('input-modal-container');
+            const titleEl = document.getElementById('input-title');
+            const fieldsEl = document.getElementById('input-fields');
+            titleEl.textContent = title;
+            fieldsEl.innerHTML = '';
+            fields.forEach(field => {
+                fieldsEl.innerHTML += `<label for="${field.id}" class="block text-sm font-medium text-color-secondary mb-1">${field.label}</label><input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" class="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-color-primary focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3">`;
+            });
+            inputModal.classList.add('active');
+            inputCallback = () => {
+                const values = {};
+                fields.forEach(field => { values[field.id] = document.getElementById(field.id)?.value; });
+                onConfirm(values);
+                inputModal.classList.remove('active');
+            };
+        }
+
+        document.getElementById('app-container').addEventListener('click', (e) => {
+            const categoryDeleteBtn = e.target.closest('.fa-trash-alt[data-name]');
+            if (categoryDeleteBtn) {
+                const name = categoryDeleteBtn.dataset.name;
+                const type = categoryDeleteBtn.dataset.type;
+                if (name === '其他') { showAlert('“其他”分类无法删除。'); return; }
+                showConfirmModal('确认删除分类', `删除后，与此分类相关的交易将归为“其他”。此操作无法撤销。`, () => {
+                    appState.transactions.forEach(t => { if (t.type === type && t.category === name) t.category = '其他'; });
+                    if (type === 'expense') appState.expenseCategories = appState.expenseCategories.filter(c => c.name !== name);
+                    else appState.incomeCategories = appState.incomeCategories.filter(c => c.name !== name);
+                    saveState(); showAlert('分类已删除'); renderCategoryManagementPage();
+                    document.getElementById('confirm-modal-container')?.classList.remove('active');
+                });
+                return;
+            }
+            const target = e.target.closest('[id]');
+            if (!target) return;
+            const actionMap = {
+                'nav-home': () => { e.preventDefault(); showScreen('screen-home'); },
+                'nav-budget': () => { e.preventDefault(); showScreen('screen-budget'); },
+                'nav-add': () => { e.preventDefault(); openModal(); },
+                'nav-analytics': () => { e.preventDefault(); showScreen('screen-analytics'); },
+                'nav-settings': () => { e.preventDefault(); showScreen('screen-settings'); },
+                'view-all-transactions-btn': () => showScreen('screen-transaction-history'),
+                'category-management-btn': () => showScreen('screen-category-management'),
+                'piggy-bank-card': () => showScreen('screen-piggy-bank'),
+                'back-to-home-from-history-btn': () => showScreen('screen-home'),
+                'back-to-settings-btn': () => showScreen('screen-settings'),
+                'back-to-home-from-piggy-btn': () => showScreen('screen-home'),
+                'period-toggle': () => { analyticsPeriodType = analyticsPeriodType === 'month' ? 'year' : 'month'; renderAnalyticsPage(); },
+                'prev-period-btn': () => { if(analyticsPeriodType === 'month') analyticsTargetDate.setMonth(analyticsTargetDate.getMonth() - 1); else analyticsTargetDate.setFullYear(analyticsTargetDate.getFullYear() - 1); renderAnalyticsPage(); },
+                'next-period-btn': () => { if(analyticsPeriodType === 'month') analyticsTargetDate.setMonth(analyticsTargetDate.getMonth() + 1); else analyticsTargetDate.setFullYear(analyticsTargetDate.getFullYear() + 1); renderAnalyticsPage(); },
+                'clear-data-btn': () => showConfirmModal('确认清除', '此操作将永久删除所有交易记录，无法恢复。您确定要继续吗？', () => { appState = JSON.parse(JSON.stringify(defaultState)); saveState(); renderAll(); showAlert('所有数据已清除'); document.getElementById('confirm-modal-container')?.classList.remove('active'); }),
+                'deposit-to-piggy-btn': () => showInputModal('存一笔钱', [{id: 'deposit-amount', label: '存入金额', type: 'number', placeholder: '例如: 100'}], (values) => { const amount = parseFloat(values['deposit-amount']); if (!isNaN(amount) && amount > 0) { appState.piggyBank.savedAmount += amount; appState.transactions.unshift({ id: genId(), type: 'expense', category: '存钱', amount: amount, remark: `存入“${appState.piggyBank.goalName}”`, date: new Date().toISOString().split('T')[0] }); saveState(); renderAll(); showAlert(`成功存入 ¥${amount.toFixed(2)}`); } else { showAlert('请输入有效的金额'); } }),
+                'set-piggy-goal-btn': () => showInputModal('设置新目标', [{id: 'goal-name', label: '目标名称', type: 'text', placeholder: '例如: 买新手机'}, {id: 'goal-amount', label: '目标金额', type: 'number', placeholder: '例如: 6999'}], (values) => { const name = values['goal-name']; const amount = parseFloat(values['goal-amount']); if (name && !isNaN(amount) && amount > 0) { appState.piggyBank.goalName = name; appState.piggyBank.goalAmount = amount; appState.piggyBank.savedAmount = 0; saveState(); renderPiggyBankPage(); showAlert('新目标已设置！'); } else { showAlert('请输入有效的目标名称和金额'); } }),
+                'save-btn': () => {
+                    if (parseFloat(currentAmount) === 0) { showAlert('金额不能为0'); return; } 
+                    const selectedCategoryEl = document.querySelector('.category-item.selected'); 
+                    if (!selectedCategoryEl) { showAlert('请选择一个分类'); return; }
+                    const categoryName = selectedCategoryEl.querySelector('span')?.textContent || ''; 
+                    appState.transactions.unshift({ id: genId(), type: currentType, category: categoryName, amount: parseFloat(currentAmount), remark: document.getElementById('remark-input').value, date: new Date().toISOString().split('T')[0] }); 
+                    saveState(); closeModal(); showAlert('保存成功!'); renderAll(); showScreen('screen-transaction-history'); 
+                },
+                'backspace-btn': () => { currentAmount = currentAmount.length > 1 ? currentAmount.slice(0, -1) : '0'; updateDisplay(); },
+                'confirm-ok-btn': () => confirmCallback?.(),
+                'confirm-cancel-btn': () => document.getElementById('confirm-modal-container')?.classList.remove('active'),
+                'input-ok-btn': () => inputCallback?.(),
+                'input-cancel-btn': () => document.getElementById('input-modal-container')?.classList.remove('active'),
+                'modal-backdrop': () => closeModal(),
+            };
+            if(actionMap[target.id]) actionMap[target.id]();
+        });
+
+        document.getElementById('theme-toggle')?.addEventListener('change', (e) => { applyTheme(e.target.checked); localStorage.setItem('moneyer-theme', e.target.checked ? 'dark' : 'light'); });
+        
+        document.getElementById('modal-content')?.addEventListener('click', (e) => {
+            const keypadBtn = e.target.closest('.keypad-btn');
+            if (keypadBtn && !keypadBtn.id && !keypadBtn.querySelector('i')) {
+                const key = keypadBtn.textContent?.trim() || '';
+                if (!isNaN(parseFloat(key))) { if (currentAmount === '0') currentAmount = key; else if (currentAmount.length < 9) currentAmount += key; } 
+                else if (key === '.' && !currentAmount.includes('.')) { currentAmount += '.'; }
+                updateDisplay();
+                return;
+            }
+            const categoryItem = e.target.closest('.category-item');
+            if(categoryItem) {
+                const list = document.getElementById('category-list');
+                const currentlySelected = list.querySelector('.category-item.selected');
+                if (currentlySelected) currentlySelected.classList.remove('selected');
+                categoryItem.classList.add('selected');
+            }
+        });
+
+        // MODIFICATION: Added logic to switch grid layout between expense and income
+        document.getElementById('type-expense').addEventListener('click', () => {
+            currentType = 'expense';
+            document.getElementById('type-switcher-bg').style.transform = 'translateX(0)';
+            document.getElementById('type-expense').classList.replace('text-color-secondary', 'text-color-primary');
+            document.getElementById('type-income').classList.replace('text-color-primary', 'text-color-secondary');
+            
+            const categoryListEl = document.getElementById('category-list');
+            categoryListEl.classList.remove('grid-cols-2', 'px-8');
+            categoryListEl.classList.add('grid-cols-3');
+
+            renderCategories(appState.expenseCategories);
+        });
+        document.getElementById('type-income').addEventListener('click', () => {
+            currentType = 'income';
+            document.getElementById('type-switcher-bg').style.transform = 'translateX(calc(100% + 0.25rem))';
+            document.getElementById('type-income').classList.replace('text-color-secondary', 'text-color-primary');
+            document.getElementById('type-expense').classList.replace('text-color-primary', 'text-color-secondary');
+
+            const categoryListEl = document.getElementById('category-list');
+            categoryListEl.classList.remove('grid-cols-3');
+            categoryListEl.classList.add('grid-cols-2', 'px-8');
+
+            renderCategories(appState.incomeCategories);
+        });
+
+        document.getElementById('screen-budget').addEventListener('change', (e) => {
+            const target = e.target;
+            if(target.id === 'monthly-budget-input') { const value = parseFloat(target.value); if (!isNaN(value) && value >= 0) { appState.monthlyBudget = value; saveState(); renderHomePage(); } } 
+            else if (target.dataset.categoryName) { const value = parseFloat(target.value); const catName = target.dataset.categoryName; if (!isNaN(value) && value >= 0) { appState.categoryBudgets[catName] = value; } else { delete appState.categoryBudgets[catName]; } saveState(); }
+        });
+        
+        const isDark = localStorage.getItem('moneyer-theme') === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        loadState();
+        applyTheme(isDark);
+        showScreen('screen-home');
+        
+        setTimeout(() => {
+            document.getElementById('app-container').style.opacity = '1';
+            document.getElementById('loader').classList.add('hidden');
+        }, 200);
+    })();
+    </script>
 </body>
 </html>
